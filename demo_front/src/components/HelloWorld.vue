@@ -4,15 +4,29 @@
     </div>
     <div id="right">
       <h2>股票代码/股票名称: <input type="text" name="firstname"></h2>
+      <input type="submit" value="查询信息">
       <h2>查询关系：
         <select>
-        <option value ="volvo">所属行业</option>
-        <option value ="saab">所属概念</option>
-        <option value="audi">高管信息</option>
+        <option value ="volvo">行业</option>
+        <option value ="saab">板块</option>
+        <option value="audi">概念</option>
+        <option value="audi">地域</option>
         </select>
       </h2>
-      <p>公司信息：xxx</p>
-      <input type="submit" value="查询信息">
+      <table border="1">
+        <tr>
+          <td>主板</td>
+        </tr>
+        <tr>
+          <td>创业板</td>
+        </tr>
+        <tr>
+          <td>中小板</td>
+        </tr>
+        <tr>
+          <td>科创板</td>
+        </tr>
+      </table>
 
     </div>
   </div>
@@ -29,46 +43,243 @@
     return {
       width:800,
       height:600,
+      nodes:[],
+      links:[],
+      nodeNameText:[],
+      linkRelation:[],
+      simulation:null,
       testGraph:{
         "nodes":[
-          {"id": "东方财富", "group": 1},
-          {"id": "证券", "group": 30},
-          {"id": "上海", "group": 30},
-          {"id": "300059", "group": 30}
+          {"id": "广东鸿图", "group": 1,"type":"stock"},
+          {"id": "广东鸿图科技股份有限公司", "group": 30,"type":"company"},
+          {"id": "广东", "group": 30,"type":"location"},
+          {"id": "主板", "group": 2,"type":"plate"},
+          {"id": "行业概念", "group": 2,"type":"conception"}
         ],
         "links":[
-          {"source": "东方财富", "target": "证券", "value": 1,"relation":"行业"},
-          {"source": "东方财富", "target": "上海", "value": 10,"relation":"地域"},
-          {"source": "东方财富", "target": "300059", "value": 8,"relation":"股票代码"},
+          {"source": "广东鸿图", "target": "广东鸿图科技股份有限公司", "value": 1,"relation":"行业"},
+          {"source": "广东鸿图", "target": "广东", "value": 10,"relation":"地域"},
+          {"source": "广东鸿图", "target": "主板", "value": 8,"relation":"板块"},
+          {"source": "广东鸿图", "target": "行业概念", "value": 8,"relation":"概念"},
         ]
       },
-      shGraph:{
+      gdGraph:{
         "nodes":[
-          {"id": "上海", "group": 1},
-          {"id": "浦发银行", "group": 2},
-          {"id": "上海机场", "group": 3},
-          {"id": "东方财富", "group": 4}
+          {"id": "广东鸿图", "group": 1,"type":"stock"},
+          {"id": "文化长城", "group": 1,"type":"stock"},
+          {"id": "白云山", "group": 1,"type":"stock"},
+          {"id": "广东", "group": 1,"type":"location"},
         ],
         "links":[
-          {"source": "上海", "target": "浦发银行", "value": 5,"relation":"地域"},
-          {"source": "上海", "target": "上海机场", "value": 5,"relation":"地域"},
-          {"source": "上海", "target": "东方财富", "value": 5,"relation":"地域"},
+          {"source": "广东", "target": "白云山", "value": 1,"relation":" "},
+          {"source": "广东", "target": "广东鸿图", "value": 10,"relation":" "},
+          {"source": "广东", "target": "文化长城", "value": 8,"relation":" "},
         ]
-      }
+      },
     }
   },
+
   mounted(){
-    this.initGraph(this.testGraph)
+    this.initGraph(this.gdGraph)
   },
   methods:{
-    updateGraph(data){
+    updateGraph(data,nodeEnter,linkEnter){
+      var _this = this
+      // const nodes = data.nodes.map(d => Object.create(d));
+      // const links = data.links.map(d => Object.create(d));
+      var links = data.links
+      var nodes = data.nodes
+      console.log(_this.nodes)
+
+
+      if (nodeEnter)
+      {
+        _this.nodes = _this.nodes
+        .data(nodes)
+        // .exit().remove()
+        .enter()
+        .append("circle")
+        .attr("r", 40)
+        .text(d => d.id)
+        .attr("fill", function (d) {
+          const scale = d3.scaleOrdinal(d3.schemeCategory10);
+          return scale(100+d.group);
+        })
+        .attr("class","node")
+        .merge(_this.nodes)
+        .call(_this.drag(_this.simulation))
+          .on("click",d=>//鼠标监听
+          {
+            if (d.type == "location")
+            {
+              this.updateGraph(_this.gdGraph,false,false);
+            }
+            if (d.type == "stock")
+            {
+              this.updateGraph(_this.testGraph,true,true);
+            }
+          });
+
+        _this.nodes
+          .data(nodes)
+        .exit().remove()
+        .merge(_this.nodes);
+
+
+        _this.nodeNameText = _this.nodeNameText
+          .data(nodes)
+          .enter()
+          // .exit().remove()
+          .append("text")
+          .merge(_this.nodeNameText)
+          .attr("fill","#3edb14")
+          .classed("nodeName",true)
+          .attr("font-size",20)
+          .attr("class","nodeName")
+          .text(function (d)
+          {
+            return d.id
+          })
+          .attr("dx",function(){
+            // -10;
+            return this.getBoundingClientRect().width/2*(-1);
+          })
+          .attr("dy",60);
+      }
+      else{
+      _this.nodes = _this.nodes
+        .data(nodes)
+        // .enter()
+        .exit().remove()
+        .merge(_this.nodes)
+      ;
+        // .append("circle")
+        // .attr("r", 40)
+        // .text(d => d.id)
+        // .attr("fill", function (d) {
+        //   const scale = d3.scaleOrdinal(d3.schemeCategory10);
+        //   return scale(100+d.group);
+        // })
+        // .attr("class","node")
+        // .call(_this.drag(_this.simulation))
+        // .on("click",d=>//鼠标监听
+        // {
+        //   if (d.type == "location")
+        //   {
+        //     this.updateGraph(_this.gdGraph,false,false);
+        //   }
+        //   if (d.type == "stock")
+        //   {
+        //     this.updateGraph(_this.testGraph,true,true);
+        //   }
+        // });
+
+
+      _this.nodeNameText = _this.nodeNameText
+        .data(nodes)
+        // .enter()
+        .exit().remove()
+        .append("text")
+        .merge(_this.nodeNameText)
+        .attr("fill","#3edb14")
+        .classed("nodeName",true)
+        .attr("font-size",20)
+        .attr("class","nodeName")
+        .text(function (d)
+        {
+          return d.id
+        })
+        .attr("dx",function(){
+          // -10;
+          return this.getBoundingClientRect().width/2*(-1);
+        })
+        .attr("dy",60);
+      }
+
+
+      if (linkEnter)
+      {
+        _this.links = _this.links
+          .data(links)
+          .enter()
+          // .exit().remove()
+          .append("path")
+          .attr("marker-end","url(#positiveMarker)")
+          .attr("stroke", "#999")
+          .attr("stroke-opacity", 0.6)
+          .attr("stroke-width", d => Math.sqrt(d.value))
+          .attr("id",d => d.source + "_" + d.relation+"_"+d.target)
+          .merge(_this.links);
+
+        _this.linkRelation = _this.linkRelation
+          .data(links)
+          .enter()
+          // .exit().remove()
+          .append("textPath")
+          .merge(_this.linkRelation)
+          .style("text-anchor", "middle")
+          .style("fill","white")
+          .style("font-size","20px")
+          .style("font-weight", "bold")
+          .attr("class","linkRelation")
+          .attr(
+            "xlink:href", d => "#" + d.source +"_" + d.relation + "_" +d.target
+          )
+          .attr("startOffset" , "50%")
+          .text(function (d)
+          {
+            return d.relation
+          })
+      }
+      else
+      {
+        _this.links = _this.links
+          .data(links)
+          // .enter()
+          .exit().remove()
+          .append("path")
+          .attr("marker-end","url(#positiveMarker)")
+          .attr("stroke", "#999")
+          .attr("stroke-opacity", 0.6)
+          .attr("stroke-width", d => Math.sqrt(d.value))
+          .attr("id",d => d.source + "_" + d.relation+"_"+d.target)
+          .merge(_this.links);
+
+        _this.linkRelation = _this.linkRelation
+          .data(links)
+          // .enter()
+          .exit().remove()
+          .append("textPath")
+          .merge(_this.linkRelation)
+          .style("text-anchor", "middle")
+          .style("fill","white")
+          .style("font-size","20px")
+          .style("font-weight", "bold")
+          .attr("class","linkRelation")
+          .attr(
+            "xlink:href", d => "#" + d.source +"_" + d.relation + "_" +d.target
+          )
+          .attr("startOffset" , "50%")
+          .text(function (d)
+          {
+            return d.relation
+          })
+      }
+
+      _this.simulation.nodes(nodes)
+      _this.simulation.force("link").links(links)
+      _this.simulation.alpha(1).restart()
     },
+
     initGraph(data){
       var _this = this
-      const links = data.links;
-      const nodes = data.nodes;
 
-      const simulation = d3.forceSimulation(nodes)
+      const links = data.links
+      const nodes = data.nodes
+      // const nodes = data.nodes.map(d => Object.create(d));
+      // const links = data.links.map(d => Object.create(d));
+
+      _this.simulation = d3.forceSimulation(nodes)
         .force("link", d3.forceLink(links).id(d => d.id).distance(200))
         .force("charge", d3.forceManyBody().strength(-30))
         .force("center", d3.forceCenter(_this.width / 2, _this.height / 2));
@@ -83,7 +294,7 @@
 
       const g = svg.append("g")
 
-      const link = g.append("g")//节点的关系连线
+      _this.links = g.append("g")//节点的关系连线
         .attr("marker-end","url(#positiveMarker)")
         .attr("stroke", "#999")
         .attr("stroke-opacity", 0.6)
@@ -93,7 +304,7 @@
         .attr("stroke-width", d => Math.sqrt(d.value))
         .attr("id",d => d.source + "_" + d.relation+"_"+d.target);
 
-      const node = g.append("g")//节点声明
+      _this.nodes = g.append("g")//节点声明
         .attr("stroke", "#ffffff")
         .attr("stroke-width", 1.5)
         .selectAll("circle")
@@ -104,40 +315,35 @@
           const scale = d3.scaleOrdinal(d3.schemeCategory10);
           return scale(100+d.group);
         })
-        .attr("class","node")
         .on("mouseover", function(d) {
           d3.select(this).style("stroke", "orange");})
         .on("mouseout", function(d) {
           d3.select(this).style("stroke", "white");
         })
-        .call(_this.drag(simulation))
+        .call(_this.drag(_this.simulation))
         .on("click",d=>//鼠标监听
         {
-          if (d.id == "上海")
+          if (d.type == "location")
           {
-            this.testGraph.nodes = this.shGraph.nodes
-            this.testGraph.links = this.shGraph.links
-            this.initGraph(this.shGraph)
-            // _this.link=globalData.shGraph.links
-            // _this.updateGraph(globalData.shGraph)
-            console.log(data.nodes);
+            _this.updateGraph(_this.gdGraph,false,false);
           }
-        });
+          if (d.type == "stock")
+          {
+            _this.updateGraph(_this.testGraph,true,true);
+          }
+        })
+      ;
 
-      node.append("title")
+      _this.nodes.append("title")
         .text(d => d.id)
 
         // .on("click", queryTest())
 
-      const nodeNameText = g.append("g")//节点的文字显示
+      _this.nodeNameText = g.append("g")//节点的文字显示
       .selectAll("text")
       .data(nodes)
       .join("text")
       .attr("fill","#3edb14")
-      .attr("dx",function(){
-        return -30
-      })
-      .attr("dy",60)
       .classed("nodeName",true)
       // .attr("fill","white")
       .attr("font-size",20)
@@ -146,9 +352,14 @@
       {
         return d.id
       })
+      .attr("dx",function(){
+        // -10;
+        return this.getBoundingClientRect().width/2*(-1);
+      })
+      .attr("dy",60);
       // console.log(nodeNameText)
 
-      const linkRelation = g.append("g")//连接的文字显示
+      _this.linkRelation = g.append("g")//连接的文字显示
       .selectAll("text")
       .data(links)
       .join("text")
@@ -200,8 +411,8 @@
         .attr("fill", "#999")
         .attr("stroke-opacity", 0.6)
 
-      simulation.on("tick", () => {//坐标控制
-        link
+      _this.simulation.on("tick", () => {
+        _this.links
           .attr("d", function(d)
           {
           if(d.source.x<d.target.x)
@@ -223,15 +434,15 @@
               }
             })
 
-        node
+        _this.nodes
           .attr("cx", d => d.x)
           .attr("cy", d => d.y);
 
-        nodeNameText
+        _this.nodeNameText
           .attr("x",d => d.x)
           .attr("y",d => d.y);
 
-        linkRelation
+        _this.linkRelation
           .attr("font-size",20)
       });
     },
