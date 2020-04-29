@@ -76,20 +76,36 @@
           {"source": "广东", "target": "文化长城", "value": 8,"relation":" "},
         ]
       },
+      zbGraph:{
+        "nodes":[
+          {"id": "广东鸿图", "group": 1,"type":"stock"},
+          {"id": "文化长城", "group": 1,"type":"stock"},
+          {"id": "白云山", "group": 1,"type":"stock"},
+          {"id": "东方财富", "group": 1,"type":"stock"},
+          {"id": "中国石油", "group": 1,"type":"stock"},
+          {"id": "主板", "group": 1,"type":"plate"},
+        ],
+        "links":[
+          {"source": "主板", "target": "白云山", "value": 1,"relation":" "},
+          {"source": "主板", "target": "广东鸿图", "value": 10,"relation":" "},
+          {"source": "主板", "target": "东方财富", "value": 8,"relation":" "},
+          {"source": "主板", "target": "中国石油", "value": 8,"relation":" "},
+          {"source": "主板", "target": "文化长城", "value": 8,"relation":" "},
+        ]
+      },
     }
   },
 
   mounted(){
-    this.initGraph(this.gdGraph)
+    this.initGraph(this.testGraph)
   },
   methods:{
     updateGraph(data,nodeEnter,linkEnter){
-      var _this = this
+      const _this = this
       // const nodes = data.nodes.map(d => Object.create(d));
       // const links = data.links.map(d => Object.create(d));
-      var links = data.links
-      var nodes = data.nodes
-      console.log(_this.nodes)
+      let links = data.links
+      let nodes = data.nodes
 
 
       if (nodeEnter)
@@ -110,21 +126,30 @@
         .call(_this.drag(_this.simulation))
           .on("click",d=>//鼠标监听
           {
+            let tGraph = _this.testGraph;
             if (d.type == "location")
             {
-              this.updateGraph(_this.gdGraph,false,false);
+              tGraph = _this.gdGraph
             }
             if (d.type == "stock")
             {
-              this.updateGraph(_this.testGraph,true,true);
+              tGraph = _this.testGraph
             }
-          });
-
-        _this.nodes
-          .data(nodes)
-        .exit().remove()
-        .merge(_this.nodes);
-
+            if (d.type == "plate")
+            {
+              tGraph = _this.zbGraph
+            }
+            let nodeEnter = true
+            let linkEnter = true
+            if (_this.nodes.size() > tGraph.nodes.length)
+            {nodeEnter = false}
+            if (_this.links.size() > tGraph.links.length)
+            {linkEnter = false}
+            _this.updateGraph(tGraph,nodeEnter,linkEnter);
+            console.log(_this.nodes.size())
+            console.log(tGraph.nodes.length)
+          })
+        ;
 
         _this.nodeNameText = _this.nodeNameText
           .data(nodes)
@@ -152,27 +177,32 @@
         // .enter()
         .exit().remove()
         .merge(_this.nodes)
+        .on("click",d=>//鼠标监听
+        {
+          let tGraph = _this.testGraph;
+          if (d.type == "location")
+          {
+            tGraph = _this.gdGraph
+          }
+          if (d.type == "stock")
+          {
+            tGraph = _this.testGraph
+          }
+          if (d.type == "plate")
+          {
+            tGraph = _this.zbGraph
+          }
+          let nodeEnter = true
+          let linkEnter = true
+          if (_this.nodes.size() > tGraph.nodes.length)
+          {nodeEnter = false}
+          if (_this.links.size() > tGraph.links.length)
+          {linkEnter = false}
+          _this.updateGraph(tGraph,nodeEnter,linkEnter);
+          console.log(_this.nodes.size())
+          console.log(tGraph.nodes.length)
+        })
       ;
-        // .append("circle")
-        // .attr("r", 40)
-        // .text(d => d.id)
-        // .attr("fill", function (d) {
-        //   const scale = d3.scaleOrdinal(d3.schemeCategory10);
-        //   return scale(100+d.group);
-        // })
-        // .attr("class","node")
-        // .call(_this.drag(_this.simulation))
-        // .on("click",d=>//鼠标监听
-        // {
-        //   if (d.type == "location")
-        //   {
-        //     this.updateGraph(_this.gdGraph,false,false);
-        //   }
-        //   if (d.type == "stock")
-        //   {
-        //     this.updateGraph(_this.testGraph,true,true);
-        //   }
-        // });
 
 
       _this.nodeNameText = _this.nodeNameText
@@ -269,6 +299,7 @@
       _this.simulation.nodes(nodes)
       _this.simulation.force("link").links(links)
       _this.simulation.alpha(1).restart()
+      // console.log(_this.simulation.nodes(nodes))
     },
 
     initGraph(data){
@@ -323,14 +354,28 @@
         .call(_this.drag(_this.simulation))
         .on("click",d=>//鼠标监听
         {
+          let tGraph = _this.testGraph;
           if (d.type == "location")
           {
-            _this.updateGraph(_this.gdGraph,false,false);
+            tGraph = _this.gdGraph
           }
           if (d.type == "stock")
           {
-            _this.updateGraph(_this.testGraph,true,true);
+            tGraph = _this.testGraph
           }
+          if (d.type == "plate")
+          {
+            tGraph = _this.zbGraph
+          }
+          let nodeEnter = true
+          let linkEnter = true
+          if (_this.nodes.size() > tGraph.nodes.length)
+          {nodeEnter = false}
+          if (_this.links.size() > tGraph.links.length)
+          {linkEnter = false}
+          _this.updateGraph(tGraph,nodeEnter,linkEnter);
+          console.log(_this.nodes.size())
+          console.log(tGraph.nodes.length)
         })
       ;
 
