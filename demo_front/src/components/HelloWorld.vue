@@ -43,7 +43,7 @@
     return {
       width:800,
       height:600,
-      nodes:[],
+      nodes:[],//使用全局变量以更新画布
       links:[],
       nodeNameText:[],
       linkRelation:[],
@@ -107,8 +107,7 @@
       let links = data.links
       let nodes = data.nodes
 
-
-      if (nodeEnter)
+      if (nodeEnter)//绑定元素大于已有元素，使用enter占位
       {
         _this.nodes = _this.nodes
         .data(nodes)
@@ -225,7 +224,6 @@
         })
         .attr("dy",60);
       }
-
 
       if (linkEnter)
       {
