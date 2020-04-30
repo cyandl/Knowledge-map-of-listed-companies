@@ -1,5 +1,5 @@
 <template>
-  <div style="width: 100%">
+  <div style="width: 100%;">
     <div class="container" >
     </div>
     <div id="right">
@@ -40,9 +40,10 @@
   export default {
   name: 'HelloWorld',
   data () {
+    // node结构：{"id": "广东鸿图", "group": 1,"type":"stock","code":"002101"}
     return {
       width:800,
-      height:600,
+      height:500,
       colorList:["blue","pink","blue","pink","blue","pink","blue","pink","blue","pink"],
       g:null,
       blank:[],
@@ -75,14 +76,15 @@
           {"id": "广东鸿图科技股份有限公司", "group": 2,"type":"company"},
           {"id": "广东", "group": 2,"type":"location"},
           {"id": "主板", "group": 2,"type":"plate"},
-          {"id": "行业概念", "group": 2,"type":"conception"}
+          {"id": "行业概念", "group": 2,"type":"conceptionTag"}
         ],
         "links":[
           {"source": "广东鸿图", "target": "广东鸿图科技股份有限公司", "value": 1,"relation":"公司"},
           {"source": "广东鸿图", "target": "广东", "value": 10,"relation":"地域"},
           {"source": "广东鸿图", "target": "主板", "value": 8,"relation":"板块"},
-          {"source": "广东鸿图", "target": "行业概念", "value": 8,"relation":"概念"},
-        ]
+          {"source": "广东鸿图", "target": "行业概念", "value": 8,"relation":"概念"}],
+        "conceptionList":["特斯拉概念","国资重组"],
+        "conceptionExtension":false,
       },
       gdGraph:{
         "nodes":[
@@ -114,18 +116,31 @@
           {"source": "主板", "target": "文化长城", "value": 8,"relation":" "},
         ]
       },
+      tslGraph:{
+        "nodes":[
+          {"id": "广东鸿图", "group": 1,"type":"stock","code":"002101"},
+          {"id": "华特气体","group": 1,"type":"stock","code":"688268"},
+          {"id": "虹软科技", "group": 1,"type":"stock","code":"688088"},
+          {"id": "特斯拉概念", "group": 2,"type":"conception"},
+        ],
+        "links":[
+          {"source": "特斯拉概念", "target": "华特气体", "value": 1,"relation":" "},
+          {"source": "特斯拉概念", "target": "广东鸿图", "value": 10,"relation":" "},
+          {"source": "特斯拉概念", "target": "虹软科技", "value": 8,"relation":" "},
+        ]
+      }
     }
   },
 
   mounted(){
     this.axios.post("/init",{
       limit:25
-    })
+    })//向后端发送请求
     .then(function(response)
     {
       if(response.status === 200)
       {
-        this.Graph4Update.nodes=response.data.nodes;//25个
+        this.Graph4Update.nodes=response.data.nodes;//25个初始节点
         // node结构：{"id": "广东鸿图", "group": 1,"type":"stock","code":"002101"}
       }
     })
@@ -133,7 +148,7 @@
     {
       console.log(error)
     })
-    this.initGraph(this.Graph4Update)
+    this.initGraph(this.Graph4Update)//初始化画布
 
   },
   methods:{
@@ -175,7 +190,7 @@
         .call(_this.drag(_this.simulation))
         .on("click",d=>//鼠标监听
         {
-          _this.search(d.type)
+          _this.search(d.type,d.id)
         })
       ;
       _this.nodes.append("title")
@@ -286,7 +301,7 @@
         .call(_this.drag(_this.simulation))
         .on("click",d=>//鼠标监听
         {
-          _this.search(d.type)
+          _this.search(d.type,d.id)
         })
       ;
 
@@ -432,7 +447,8 @@
         .on("end", dragended);
     },
 
-    search(nodeType){
+    search(nodeType,nodeMsg){
+      //点击\查询事件，数据写死本地
       let tGraph = this.Graph4Update;
       if (nodeType == "location")
       {
@@ -446,11 +462,39 @@
       {
         tGraph = this.zbGraph
       }
+      if (nodeType == "conception")
+      {
+        tGraph = this.tslGraph
+      }
+      if (nodeType == "conceptionTag")
+      {
+        if (this.stockGraph.conceptionExtension)
+        {
+          for(let i=0;i<this.stockGraph.conceptionList.length;i++)
+          {
+            this.stockGraph.links.pop()
+            this.stockGraph.nodes.pop()
+          }
+          this.stockGraph.conceptionExtension = false
+        }
+        else
+        {
+          for(let i=0;i<this.stockGraph.conceptionList.length;i++)
+          {
+            this.stockGraph.nodes.push({"id":this.stockGraph.conceptionList[i], "group": 2,"type":"conception"})
+            this.stockGraph.links.push({"source": "行业概念", "target": this.stockGraph.conceptionList[i],
+              "value": 2,"relation":"概念"+(i+1)},)
+          }
+          this.stockGraph.conceptionExtension = true
+        }
+        tGraph = this.stockGraph
+      }
       this.updateGraph(tGraph);
     }
 
-    // search(nodeType,nodeMsg)
+    // search(nodeType,nodeMsg)//点击/查询事件，向后端请求数据
     // {
+    //   let _this = this
     //   if (nodeType == "stock")
     //   //点击节点为股票，输入股票代码（nodeMsg），返回股票信息node
     //   {
@@ -461,19 +505,87 @@
     //     {
     //       if(response.status === 200)
     //       {
-    //         this.Graph4Update.nodes=response.data.nodes;//25个
-    //         //"node":{"id": "广东", "group": 2,"type":"location"}
-    //         //"links":{"source": "广东", "target": "白云山", "value": 1,"relation":" "},
+    //         let stockNode = []
+    //         let stockLink = []
+    //         let res=response.data;
+    //         _this.stockGraph.conceptionList = res.conception
+    //         _this.stockGraph.conceptionExtension = false
+    //         // res = {"id": "广东鸿图","code":"002101","company":"广东鸿图科技股份有限公司",
+    //         //   "location":"广东","plate":"主板","conception":["c1","c2"]}
+    //         stockNode.push({"id": res.id, "group": 1,"type":"stock","code":res.code})
+    //         stockNode.push({"id": res.company, "group": 2,"type":"company"})
+    //         stockNode.push({"id": res.location, "group": 2,"type":"location"})
+    //         stockNode.push({"id": res.plate, "group": 2,"type":"plate"})
+    //         stockNode.push({"id": "行业概念", "group": 2,"type":"conceptionTag"})
+    //         _this.stockGraph.nodes = stockNode
+    //         stockLink.push({"source": res.id, "target": res.company, "value": 3,"relation":"公司"})
+    //         stockLink.push({"source": res.id, "target": res.location, "value": 3,"relation":"地域"})
+    //         stockLink.push({"source": res.id, "target": res.plate, "value": 3,"relation":"板块"})
+    //         stockLink.push({"source": res.id, "target": "行业概念", "value": 3,"relation":"概念"})
+    //         _this.stockGraph.links = stockLink
     //       }
     //     })
     //     .catch(function(error)
     //     {
     //       console.log(error)
     //     })
+    //     this.updateGraph(this.stockGraph)
     //   }
+    //   else if (nodeType == "conceptionTag")
+    //   //展开概念信息
+    //   {
+    //     if (this.stockGraph.conceptionExtension)
+    //     {
+    //       for(let i=0;i<this.stockGraph.conceptionList.length;i++)
+    //       {
+    //         this.stockGraph.links.pop()
+    //         this.stockGraph.nodes.pop()
+    //       }
+    //       this.stockGraph.conceptionExtension = false
+    //     }
+    //     else
+    //     {
+    //       for(let i=0;i<this.stockGraph.conceptionList.length;i++)
+    //       {
+    //         this.stockGraph.nodes.push({"id":this.stockGraph.conceptionList[i], "group": 2,"type":"conception"})
+    //         this.stockGraph.links.push({"source": "行业概念", "target": this.stockGraph.conceptionList[i],
+    //           "value": 2,"relation":"概念"+(i+1)},)
+    //       }
+    //       this.stockGraph.conceptionExtension = true
+    //     }
+    //     this.updateGraph(this.stockGraph)
     //   }
+    //   else//根据关系查询股票,nodeMsg为关系名称,nodeType为关系类型（plate/location/conception）
+    //   {
+    //     this.axios.post("/" + nodeType,{
+    //       limit:25,
+    //       relation:nodeMsg,
+    //     })
+    //     .then(function(response)
+    //     {
+    //       if(response.status === 200)
+    //       {
+    //         this.Graph4Update.nodes=response.data.nodes;//将返回节点加入Graph
+    //         // node结构：{"id": "广东鸿图", "group": 2,"type":"stock","code":"002101"}
+    //         this.Graph4Update.nodes.push({"id": nodeMsg, "group": 1,"type":nodeType})//增放中心节点
+    //         let relationLink = []//存放生成的link信息
+    //         for(let i = 0;i <response.data.length;i++)
+    //         {
+    //           relationLink.push({"source": nodeMsg, "target": response.data[i].id, "value": 3,"relation":" "})
+    //         }
+    //         this.Graph4Update.links = relationLink
+    //         this.updateGraph(this.Graph4Update)
+    //       }
+    //     })
+    //     .catch(function(error)
+    //     {
+    //       console.log(error)
+    //     })
+    //     this.initGraph(this.Graph4Update)
+    //   }
+    // }
 
-    }
+  }
 }
 </script>
 
@@ -497,7 +609,7 @@ a {
   {
     width:72%;
     float: left;
-    height: 600px;
+    height: auto;
     border: 1px solid #2c3e50;
     border-radius: 8px;
     /*margin-top: 40px;*/
@@ -508,7 +620,7 @@ a {
     transparent 0, transparent 30px);
   }
   #right{
-    height: 600px;
+    height: auto;
     width:25%;
     background: #5cd9cf;
     float: right;
