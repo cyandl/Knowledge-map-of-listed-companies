@@ -36,28 +36,49 @@
 
 <script>
   import * as d3 from 'd3'
-  import * as axios from 'axios'
+
   export default {
   name: 'HelloWorld',
   data () {
     return {
       width:800,
       height:600,
+      colorList:["blue","pink","blue","pink","blue","pink","blue","pink","blue","pink"],
+      g:null,
+      blank:[],
       nodes:[],//使用全局变量以更新画布
       links:[],
       nodeNameText:[],
       linkRelation:[],
       simulation:null,
-      testGraph:{
+      Graph4Update:{
+        "nodes":[{"id": "广东鸿图", "group": 1,"type":"stock","code":"002101"},
+          {"id": "文化长城", "group": 1,"type":"stock","code":"300089"},],
+        "links":[],
+        // "nodes":[
+        //   {"id": "广东鸿图", "group": 1,"type":"stock","code":"002101"},
+        //   {"id": "广东鸿图科技股份有限公司", "group": 2,"type":"company"},
+        //   {"id": "广东", "group": 2,"type":"location"},
+        //   {"id": "主板", "group": 2,"type":"plate"},
+        //   {"id": "行业概念", "group": 2,"type":"conception"}
+        // ],
+        // "links":[
+        //   {"source": "广东鸿图", "target": "广东鸿图科技股份有限公司", "value": 1,"relation":"公司"},
+        //   {"source": "广东鸿图", "target": "广东", "value": 10,"relation":"地域"},
+        //   {"source": "广东鸿图", "target": "主板", "value": 8,"relation":"板块"},
+        //   {"source": "广东鸿图", "target": "行业概念", "value": 8,"relation":"概念"},
+        // ]
+      },
+      stockGraph:{
         "nodes":[
-          {"id": "广东鸿图", "group": 1,"type":"stock"},
-          {"id": "广东鸿图科技股份有限公司", "group": 30,"type":"company"},
-          {"id": "广东", "group": 30,"type":"location"},
+          {"id": "广东鸿图", "group": 1,"type":"stock","code":"002101"},
+          {"id": "广东鸿图科技股份有限公司", "group": 2,"type":"company"},
+          {"id": "广东", "group": 2,"type":"location"},
           {"id": "主板", "group": 2,"type":"plate"},
           {"id": "行业概念", "group": 2,"type":"conception"}
         ],
         "links":[
-          {"source": "广东鸿图", "target": "广东鸿图科技股份有限公司", "value": 1,"relation":"行业"},
+          {"source": "广东鸿图", "target": "广东鸿图科技股份有限公司", "value": 1,"relation":"公司"},
           {"source": "广东鸿图", "target": "广东", "value": 10,"relation":"地域"},
           {"source": "广东鸿图", "target": "主板", "value": 8,"relation":"板块"},
           {"source": "广东鸿图", "target": "行业概念", "value": 8,"relation":"概念"},
@@ -65,10 +86,10 @@
       },
       gdGraph:{
         "nodes":[
-          {"id": "广东鸿图", "group": 1,"type":"stock"},
-          {"id": "文化长城", "group": 1,"type":"stock"},
-          {"id": "白云山", "group": 1,"type":"stock"},
-          {"id": "广东", "group": 1,"type":"location"},
+          {"id": "广东鸿图", "group": 1,"type":"stock","code":"002101"},
+          {"id": "文化长城", "group": 1,"type":"stock","code":"300089"},
+          {"id": "白云山", "group": 1,"type":"stock","code":"600332"},
+          {"id": "广东", "group": 2,"type":"location"},
         ],
         "links":[
           {"source": "广东", "target": "白云山", "value": 1,"relation":" "},
@@ -78,12 +99,12 @@
       },
       zbGraph:{
         "nodes":[
-          {"id": "广东鸿图", "group": 1,"type":"stock"},
-          {"id": "文化长城", "group": 1,"type":"stock"},
-          {"id": "白云山", "group": 1,"type":"stock"},
-          {"id": "东方财富", "group": 1,"type":"stock"},
-          {"id": "中国石油", "group": 1,"type":"stock"},
-          {"id": "主板", "group": 1,"type":"plate"},
+          {"id": "广东鸿图", "group": 1,"type":"stock","code":"002101"},
+          {"id": "文化长城", "group": 1,"type":"stock","code":"300089"},
+          {"id": "白云山", "group": 1,"type":"stock","code":"600332"},
+          {"id": "东方财富", "group": 1,"type":"stock","code":"300059"},
+          {"id": "中国石油", "group": 1,"type":"stock","code":"601857"},
+          {"id": "主板", "group": 2,"type":"plate"},
         ],
         "links":[
           {"source": "主板", "target": "白云山", "value": 1,"relation":" "},
@@ -97,212 +118,126 @@
   },
 
   mounted(){
-    this.initGraph(this.testGraph)
+    this.axios.post("/init",{
+      limit:25
+    })
+    .then(function(response)
+    {
+      if(response.status === 200)
+      {
+        this.Graph4Update.nodes=response.data.nodes;//25个
+        // node结构：{"id": "广东鸿图", "group": 1,"type":"stock","code":"002101"}
+      }
+    })
+    .catch(function(error)
+    {
+      console.log(error)
+    })
+    this.initGraph(this.Graph4Update)
+
   },
   methods:{
-    updateGraph(data,nodeEnter,linkEnter){
+    updateGraph(data){
       const _this = this
       // const nodes = data.nodes.map(d => Object.create(d));
       // const links = data.links.map(d => Object.create(d));
       let links = data.links
       let nodes = data.nodes
 
-      if (nodeEnter)//绑定元素大于已有元素，使用enter占位
-      {
-        _this.nodes = _this.nodes
-        .data(nodes)
-        // .exit().remove()
-        .enter()
-        .append("circle")
-        .attr("r", 40)
-        .text(d => d.id)
-        .attr("fill", function (d) {
-          const scale = d3.scaleOrdinal(d3.schemeCategory10);
-          return scale(100+d.group);
-        })
-        .attr("class","node")
-        .merge(_this.nodes)
-        .call(_this.drag(_this.simulation))
-          .on("click",d=>//鼠标监听
-          {
-            let tGraph = _this.testGraph;
-            if (d.type == "location")
-            {
-              tGraph = _this.gdGraph
-            }
-            if (d.type == "stock")
-            {
-              tGraph = _this.testGraph
-            }
-            if (d.type == "plate")
-            {
-              tGraph = _this.zbGraph
-            }
-            let nodeEnter = true
-            let linkEnter = true
-            if (_this.nodes.size() > tGraph.nodes.length)
-            {nodeEnter = false}
-            if (_this.links.size() > tGraph.links.length)
-            {linkEnter = false}
-            _this.updateGraph(tGraph,nodeEnter,linkEnter);
-            console.log(_this.nodes.size())
-            console.log(tGraph.nodes.length)
-          })
-        ;
+      d3.select("svg").select("g").remove()
+      _this.g = d3.select("svg").append("g")
 
-        _this.nodeNameText = _this.nodeNameText
-          .data(nodes)
-          .enter()
-          // .exit().remove()
-          .append("text")
-          .merge(_this.nodeNameText)
-          .attr("fill","#3edb14")
-          .classed("nodeName",true)
-          .attr("font-size",20)
-          .attr("class","nodeName")
-          .text(function (d)
-          {
-            return d.id
-          })
-          .attr("dx",function(){
-            // -10;
-            return this.getBoundingClientRect().width/2*(-1);
-          })
-          .attr("dy",60);
-      }
-      else{
-      _this.nodes = _this.nodes
+      _this.links = _this.g.append("g")//节点的关系连线
+        .attr("marker-end","url(#positiveMarker)")
+        .attr("stroke", "#999")
+        .attr("stroke-opacity", 0.6)
+        .selectAll("path")
+        .data(links)
+        .join("path")
+        .attr("stroke-width", d => Math.sqrt(d.value))
+        .attr("id",d => d.source + "_" + d.relation+"_"+d.target);
+
+      _this.nodes = _this.g.append("g")//节点声明
+        .attr("stroke", "#ffffff")
+        .attr("stroke-width", 1.5)
+        .selectAll("circle")
         .data(nodes)
-        // .enter()
-        .exit().remove()
-        .merge(_this.nodes)
+        .join("circle")
+        .attr("r", 40)
+        .attr("fill", function (d) {
+          return _this.colorList[d.group%10];
+        })
+        .on("mouseover", function(d) {
+          d3.select(this).style("stroke", "orange");})
+        .on("mouseout", function(d) {
+          d3.select(this).style("stroke", "white");
+        })
+        .call(_this.drag(_this.simulation))
         .on("click",d=>//鼠标监听
         {
-          let tGraph = _this.testGraph;
-          if (d.type == "location")
-          {
-            tGraph = _this.gdGraph
-          }
-          if (d.type == "stock")
-          {
-            tGraph = _this.testGraph
-          }
-          if (d.type == "plate")
-          {
-            tGraph = _this.zbGraph
-          }
-          let nodeEnter = true
-          let linkEnter = true
-          if (_this.nodes.size() > tGraph.nodes.length)
-          {nodeEnter = false}
-          if (_this.links.size() > tGraph.links.length)
-          {linkEnter = false}
-          _this.updateGraph(tGraph,nodeEnter,linkEnter);
-          console.log(_this.nodes.size())
-          console.log(tGraph.nodes.length)
+          _this.search(d.type)
         })
       ;
-
-
-      _this.nodeNameText = _this.nodeNameText
+      _this.nodes.append("title")
+        .text(d => d.id)
+      _this.nodeNameText = _this.g.append("g")//节点的文字显示
+        .selectAll("text")
         .data(nodes)
-        // .enter()
-        .exit().remove()
-        .append("text")
-        .merge(_this.nodeNameText)
+        .join("text")
         .attr("fill","#3edb14")
         .classed("nodeName",true)
+        // .attr("fill","white")
         .attr("font-size",20)
         .attr("class","nodeName")
         .text(function (d)
         {
-          return d.id
+          if(d.type != "stock")
+          {
+            return d.id
+          }
+          else
+          {
+            return d.code + d.id
+          }
         })
         .attr("dx",function(){
           // -10;
           return this.getBoundingClientRect().width/2*(-1);
         })
         .attr("dy",60);
-      }
+      // console.log(nodeNameText)
 
-      if (linkEnter)
-      {
-        _this.links = _this.links
-          .data(links)
-          .enter()
-          // .exit().remove()
-          .append("path")
-          .attr("marker-end","url(#positiveMarker)")
-          .attr("stroke", "#999")
-          .attr("stroke-opacity", 0.6)
-          .attr("stroke-width", d => Math.sqrt(d.value))
-          .attr("id",d => d.source + "_" + d.relation+"_"+d.target)
-          .merge(_this.links);
-
-        _this.linkRelation = _this.linkRelation
-          .data(links)
-          .enter()
-          // .exit().remove()
-          .append("textPath")
-          .merge(_this.linkRelation)
-          .style("text-anchor", "middle")
-          .style("fill","white")
-          .style("font-size","20px")
-          .style("font-weight", "bold")
-          .attr("class","linkRelation")
-          .attr(
-            "xlink:href", d => "#" + d.source +"_" + d.relation + "_" +d.target
-          )
-          .attr("startOffset" , "50%")
-          .text(function (d)
-          {
-            return d.relation
-          })
-      }
-      else
-      {
-        _this.links = _this.links
-          .data(links)
-          // .enter()
-          .exit().remove()
-          .append("path")
-          .attr("marker-end","url(#positiveMarker)")
-          .attr("stroke", "#999")
-          .attr("stroke-opacity", 0.6)
-          .attr("stroke-width", d => Math.sqrt(d.value))
-          .attr("id",d => d.source + "_" + d.relation+"_"+d.target)
-          .merge(_this.links);
-
-        _this.linkRelation = _this.linkRelation
-          .data(links)
-          // .enter()
-          .exit().remove()
-          .append("textPath")
-          .merge(_this.linkRelation)
-          .style("text-anchor", "middle")
-          .style("fill","white")
-          .style("font-size","20px")
-          .style("font-weight", "bold")
-          .attr("class","linkRelation")
-          .attr(
-            "xlink:href", d => "#" + d.source +"_" + d.relation + "_" +d.target
-          )
-          .attr("startOffset" , "50%")
-          .text(function (d)
-          {
-            return d.relation
-          })
-      }
-
+      _this.linkRelation = _this.g.append("g")//连接的文字显示
+        .selectAll("text")
+        .data(links)
+        .join("text")
+        // .attr("x",100)
+        // .attr("y",80)
+        .style("text-anchor", "middle")
+        .style("fill","white")
+        .style("font-size","20px")
+        .style("font-weight", "bold")
+        .append("textPath")
+        .attr("class","linkRelation")
+        .attr(
+          "xlink:href", d => "#" + d.source +"_" + d.relation + "_" +d.target
+        )
+        .attr("startOffset" , "50%")
+        .text(function (d)
+        {
+          return d.relation
+        })
       _this.simulation.nodes(nodes)
       _this.simulation.force("link").links(links)
       _this.simulation.alpha(1).restart()
+      console.log(nodes)
+      console.log(_this.nodes)
       // console.log(_this.simulation.nodes(nodes))
+
     },
 
     initGraph(data){
       var _this = this
-
       const links = data.links
       const nodes = data.nodes
       // const nodes = data.nodes.map(d => Object.create(d));
@@ -313,17 +248,17 @@
         .force("charge", d3.forceManyBody().strength(-30))
         .force("center", d3.forceCenter(_this.width / 2, _this.height / 2));
 
-      const  svg = d3.select(".container")
+      const svg = d3.select(".container")
         .append("svg")
         .attr("viewBox", [0, 0, _this.width, _this.height]);
+      _this.g = svg.append("g")
       svg.call(d3.zoom().on("zoom",function(){
         // svg.attr("transform",d3.event.transform)
-        g.attr("transform",d3.event.transform)
+        _this.g.attr("transform",d3.event.transform)
       }))
 
-      const g = svg.append("g")
 
-      _this.links = g.append("g")//节点的关系连线
+      _this.links = _this.g.append("g")//节点的关系连线
         .attr("marker-end","url(#positiveMarker)")
         .attr("stroke", "#999")
         .attr("stroke-opacity", 0.6)
@@ -333,7 +268,7 @@
         .attr("stroke-width", d => Math.sqrt(d.value))
         .attr("id",d => d.source + "_" + d.relation+"_"+d.target);
 
-      _this.nodes = g.append("g")//节点声明
+      _this.nodes = _this.g.append("g")//节点声明
         .attr("stroke", "#ffffff")
         .attr("stroke-width", 1.5)
         .selectAll("circle")
@@ -341,8 +276,7 @@
         .join("circle")
         .attr("r", 40)
         .attr("fill", function (d) {
-          const scale = d3.scaleOrdinal(d3.schemeCategory10);
-          return scale(100+d.group);
+          return _this.colorList[d.group%10];
         })
         .on("mouseover", function(d) {
           d3.select(this).style("stroke", "orange");})
@@ -352,28 +286,7 @@
         .call(_this.drag(_this.simulation))
         .on("click",d=>//鼠标监听
         {
-          let tGraph = _this.testGraph;
-          if (d.type == "location")
-          {
-            tGraph = _this.gdGraph
-          }
-          if (d.type == "stock")
-          {
-            tGraph = _this.testGraph
-          }
-          if (d.type == "plate")
-          {
-            tGraph = _this.zbGraph
-          }
-          let nodeEnter = true
-          let linkEnter = true
-          if (_this.nodes.size() > tGraph.nodes.length)
-          {nodeEnter = false}
-          if (_this.links.size() > tGraph.links.length)
-          {linkEnter = false}
-          _this.updateGraph(tGraph,nodeEnter,linkEnter);
-          console.log(_this.nodes.size())
-          console.log(tGraph.nodes.length)
+          _this.search(d.type)
         })
       ;
 
@@ -382,32 +295,37 @@
 
         // .on("click", queryTest())
 
-      _this.nodeNameText = g.append("g")//节点的文字显示
+      _this.nodeNameText = _this.g.append("g")//节点的文字显示
       .selectAll("text")
       .data(nodes)
       .join("text")
       .attr("fill","#3edb14")
       .classed("nodeName",true)
-      // .attr("fill","white")
       .attr("font-size",20)
       .attr("class","nodeName")
       .text(function (d)
       {
-        return d.id
+        if(d.type != "stock")
+        {
+          return d.id
+        }
+        else
+        {
+          return d.code + d.id
+        }
       })
       .attr("dx",function(){
-        // -10;
         return this.getBoundingClientRect().width/2*(-1);
       })
-      .attr("dy",60);
-      // console.log(nodeNameText)
+      .attr("dy",60)
+      ;
 
-      _this.linkRelation = g.append("g")//连接的文字显示
+
+
+      _this.linkRelation = _this.g.append("g")//连接的文字显示
       .selectAll("text")
       .data(links)
       .join("text")
-      // .attr("x",100)
-      // .attr("y",80)
       .style("text-anchor", "middle")
       .style("fill","white")
       .style("font-size","20px")
@@ -456,26 +374,26 @@
 
       _this.simulation.on("tick", () => {
         _this.links
-          .attr("d", function(d)
-          {
-          if(d.source.x<d.target.x)
-          {
-            return "M " + d.source.x+" " + d.source.y + " L " + d.target.x + " " + d.target.y
-          }
-          else{
-            return "M " + d.target.x + " " + d.target.y +" L " + d.source.x+" " + d.source.y;
-          }
+        .attr("d", function(d)
+        {
+        if(d.source.x<d.target.x)
+        {
+          return "M " + d.source.x+" " + d.source.y + " L " + d.target.x + " " + d.target.y
+        }
+        else{
+          return "M " + d.target.x + " " + d.target.y +" L " + d.source.x+" " + d.source.y;
+        }
+        })
+        .attr("marker-end",function (d) {
+            if (d.source.x < d.target.x)
+            {
+              return "url(#positiveMarker)"
+            }
+            else
+            {
+              return "url(#negativeMarker)"
+            }
           })
-          .attr("marker-end",function (d) {
-              if (d.source.x < d.target.x)
-              {
-                return "url(#positiveMarker)"
-              }
-              else
-              {
-                return "url(#negativeMarker)"
-              }
-            })
 
         _this.nodes
           .attr("cx", d => d.x)
@@ -513,7 +431,49 @@
         .on("drag", dragged)
         .on("end", dragended);
     },
-  }
+
+    search(nodeType){
+      let tGraph = this.Graph4Update;
+      if (nodeType == "location")
+      {
+        tGraph = this.gdGraph
+      }
+      if (nodeType == "stock")
+      {
+        tGraph = this.stockGraph
+      }
+      if (nodeType == "plate")
+      {
+        tGraph = this.zbGraph
+      }
+      this.updateGraph(tGraph);
+    }
+
+    // search(nodeType,nodeMsg)
+    // {
+    //   if (nodeType == "stock")
+    //   //点击节点为股票，输入股票代码（nodeMsg），返回股票信息node
+    //   {
+    //     this.axios.post("/"+nodeType,{
+    //       code:nodeMsg
+    //     })
+    //     .then(function(response)
+    //     {
+    //       if(response.status === 200)
+    //       {
+    //         this.Graph4Update.nodes=response.data.nodes;//25个
+    //         //"node":{"id": "广东", "group": 2,"type":"location"}
+    //         //"links":{"source": "广东", "target": "白云山", "value": 1,"relation":" "},
+    //       }
+    //     })
+    //     .catch(function(error)
+    //     {
+    //       console.log(error)
+    //     })
+    //   }
+    //   }
+
+    }
 }
 </script>
 

@@ -3,6 +3,13 @@
 import Vue from 'vue'
 import App from './App'
 import router from './router'
+import axios from 'axios'
+import VueAxios from "vue-axios";
+
+axios.defaults.baseURL = "/api"
+axios.defaults.withCredentials = true
+Vue.use(VueAxios,axios);
+
 // import 'default-passive-events'
 
 Vue.config.productionTip = false
