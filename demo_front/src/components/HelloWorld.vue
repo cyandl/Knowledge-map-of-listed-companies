@@ -3,30 +3,30 @@
     <div class="container" >
     </div>
     <div id="right">
-      <h2>股票代码/股票名称: <input type="text" name="firstname"></h2>
-      <input type="submit" value="查询信息">
-      <h2>查询关系：
-        <select>
-        <option value ="volvo">行业</option>
-        <option value ="saab">板块</option>
-        <option value="audi">概念</option>
-        <option value="audi">地域</option>
-        </select>
-      </h2>
-      <table border="1">
-        <tr>
-          <td>主板</td>
-        </tr>
-        <tr>
-          <td>创业板</td>
-        </tr>
-        <tr>
-          <td>中小板</td>
-        </tr>
-        <tr>
-          <td>科创板</td>
-        </tr>
-      </table>
+<!--      <h2>股票代码/股票名称: <input type="text" name="firstname"></h2>-->
+<!--      <input type="submit" value="查询信息">-->
+<!--      <h2>查询关系：-->
+<!--        <select>-->
+<!--        <option value ="volvo">行业</option>-->
+<!--        <option value ="saab">板块</option>-->
+<!--        <option value="audi">概念</option>-->
+<!--        <option value="audi">地域</option>-->
+<!--        </select>-->
+<!--      </h2>-->
+<!--      <table border="1">-->
+<!--        <tr>-->
+<!--          <td>主板</td>-->
+<!--        </tr>-->
+<!--        <tr>-->
+<!--          <td>创业板</td>-->
+<!--        </tr>-->
+<!--        <tr>-->
+<!--          <td>中小板</td>-->
+<!--        </tr>-->
+<!--        <tr>-->
+<!--          <td>科创板</td>-->
+<!--        </tr>-->
+<!--      </table>-->
 
     </div>
   </div>
