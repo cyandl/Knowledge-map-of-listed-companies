@@ -6,7 +6,7 @@
     <div>
       <el-card class="box-card">
         <div>
-          {{NodeMsg}}
+          {{NodeAttr}}
         </div>
       </el-card>
     </div>
@@ -20,7 +20,7 @@
   name: 'Canvas',
   components:{MsgBoard},
   data () {
-    // node结构：{"id": "广东鸿图", "group": 1,"type":"stock","code":"002101","nodeMsg":"广东鸿图科技股份有限公司"},
+    // node结构：{"id": "广东鸿图", "group": 1,"type":"stock","code":"002101","nodeAttr":"广东鸿图科技股份有限公司"},
     return {
       width:800,
       height:500,
@@ -31,27 +31,28 @@
       links:[],
       nodeNameText:[],
       linkRelation:[],
-      NodeMsg:"",
+      nodeAttr:"",
       simulation:null,
       Graph4Update:{
-        "nodes":[{"id": "广东鸿图", "group": 1,"type":"stock","code":"002101","nodeMsg":"广东鸿图科技股份有限公司"},
-          {"id": "文化长城", "group": 1,"type":"stock","code":"300089","nodeMsg":"广东文化长城集团股份有限公司"},
-          {"id": "白云山", "group": 1,"type":"stock","code":"600332","nodeMsg":"广州白云山制药股份有限公司"},
-          {"id": "东方财富", "group": 1,"type":"stock","code":"300059","nodeMsg":"东方财富信息股份有限公司"},
-          {"id": "中国石油", "group": 1,"type":"stock","code":"601857","nodeMsg":"中国石油天然气集团公司"},],
+        "nodes":[{"id": "广东鸿图", "group": 1,"type":"stock","code":"002101","nodeAttr":"广东鸿图科技股份有限公司"},
+          {"id": "文化长城", "group": 1,"type":"stock","code":"300089","nodeAttr":"广东文化长城集团股份有限公司"},
+          {"id": "白云山", "group": 1,"type":"stock","code":"600332","nodeAttr":"广州白云山制药股份有限公司"},
+          {"id": "东方财富", "group": 1,"type":"stock","code":"300059","nodeAttr":"东方财富信息股份有限公司"},
+          {"id": "中国石油", "group": 1,"type":"stock","code":"601857","nodeAttr":"中国石油天然气集团公司"},],
         "links":[],
         // ]
       },
       stockGraph:{
         "nodes":[
-          {"id": "广东鸿图", "group": 1,"type":"stock","code":"002101","nodeMsg":"广东鸿图科技股份有限公司"},
+          {"id": "广东鸿图", "group": 1,"type":"stock","code":"002101","nodeAttr":"广东鸿图科技股份有限公司"},
           // {"id": "广东鸿图科技股份有限公司", "group": 2,"type":"company"},
           {"id": "广东", "group": 2,"type":"location"},
           {"id": "主板", "group": 2,"type":"plate"},
+          {"id": "汽车配件", "group": 2,"type":"industry"},
           {"id": "所属概念", "group": 2,"type":"conceptionTag"}
         ],
         "links":[
-          // {"source": "广东鸿图", "target": "广东鸿图科技股份有限公司", "value": 1,"relation":"公司"},
+          {"source": "广东鸿图", "target": "汽车配件", "value": 1,"relation":"行业"},
           {"source": "广东鸿图", "target": "广东", "value": 10,"relation":"地域"},
           {"source": "广东鸿图", "target": "主板", "value": 8,"relation":"板块"},
           {"source": "广东鸿图", "target": "所属概念", "value": 8,"relation":"概念"}],
@@ -60,9 +61,9 @@
       },
       gdGraph:{
         "nodes":[
-          {"id": "广东鸿图", "group": 1,"type":"stock","code":"002101","nodeMsg":"广东鸿图科技股份有限公司"},
-          {"id": "文化长城", "group": 1,"type":"stock","code":"300089","nodeMsg":"广东文化长城集团股份有限公司"},
-          {"id": "白云山", "group": 1,"type":"stock","code":"600332","nodeMsg":"广州白云山制药股份有限公司"},
+          {"id": "广东鸿图", "group": 1,"type":"stock","code":"002101","nodeAttr":"广东鸿图科技股份有限公司"},
+          {"id": "文化长城", "group": 1,"type":"stock","code":"300089","nodeAttr":"广东文化长城集团股份有限公司"},
+          {"id": "白云山", "group": 1,"type":"stock","code":"600332","nodeAttr":"广州白云山制药股份有限公司"},
           {"id": "广东", "group": 2,"type":"location"},
         ],
         "links":[
@@ -73,11 +74,11 @@
       },
       zbGraph:{
         "nodes":[
-          {"id": "广东鸿图", "group": 1,"type":"stock","code":"002101","nodeMsg":"广东鸿图科技股份有限公司"},
-          {"id": "文化长城", "group": 1,"type":"stock","code":"300089","nodeMsg":"广东文化长城集团股份有限公司"},
-          {"id": "白云山", "group": 1,"type":"stock","code":"600332","nodeMsg":"广州白云山制药股份有限公司"},
-          {"id": "东方财富", "group": 1,"type":"stock","code":"300059","nodeMsg":"东方财富信息股份有限公司"},
-          {"id": "中国石油", "group": 1,"type":"stock","code":"601857","nodeMsg":"中国石油天然气集团公司"},
+          {"id": "广东鸿图", "group": 1,"type":"stock","code":"002101","nodeAttr":"广东鸿图科技股份有限公司"},
+          {"id": "文化长城", "group": 1,"type":"stock","code":"300089","nodeAttr":"广东文化长城集团股份有限公司"},
+          {"id": "白云山", "group": 1,"type":"stock","code":"600332","nodeAttr":"广州白云山制药股份有限公司"},
+          {"id": "东方财富", "group": 1,"type":"stock","code":"300059","nodeAttr":"东方财富信息股份有限公司"},
+          {"id": "中国石油", "group": 1,"type":"stock","code":"601857","nodeAttr":"中国石油天然气集团公司"},
           {"id": "主板", "group": 2,"type":"plate"},
         ],
         "links":[
@@ -90,9 +91,9 @@
       },
       tslGraph:{
         "nodes":[
-          {"id": "广东鸿图", "group": 1,"type":"stock","code":"002101","nodeMsg":"广东鸿图科技股份有限公司"},
-          {"id": "华特气体","group": 1,"type":"stock","code":"688268","nodeMsg":"广东华特气体股份有限公司"},
-          {"id": "虹软科技", "group": 1,"type":"stock","code":"688088","nodeMsg":"虹软科技股份有限公司"},
+          {"id": "广东鸿图", "group": 1,"type":"stock","code":"002101","nodeAttr":"广东鸿图科技股份有限公司"},
+          {"id": "华特气体","group": 1,"type":"stock","code":"688268","nodeAttr":"广东华特气体股份有限公司"},
+          {"id": "虹软科技", "group": 1,"type":"stock","code":"688088","nodeAttr":"虹软科技股份有限公司"},
           {"id": "特斯拉概念", "group": 2,"type":"conception"},
         ],
         "links":[
@@ -112,8 +113,14 @@
     {
       if(response.status === 200)
       {
-        this.Graph4Update.nodes=response.data.nodes;//25个初始节点
-        // node结构：{"id": "广东鸿图", "group": 1,"type":"stock","code":"002101"}
+        let relationNode = []//存放生成的link信息
+        //stockNode.push({"id": res.shorthand, "group": 1,"type":"stock","code":res.code,"nodeAttr":res.chesename})//信息写入临时节
+        for(let i = 0;i <response.data.length;i++)
+        {
+          relationNode.push({"id": response.data[i].node.shorthand, "group": 1,"type":"stock",
+            "code":response.data[i].code,"nodeAttr":response.data[i].chinesename})
+        }
+        this.Graph4Update.nodes=relationNode;//将返回节点加入Graph
       }
     })
     .catch(function(error)
@@ -156,11 +163,11 @@
         })
         .on("mouseover", function(d) {
           d3.select(this).style("stroke", "orange");
-          _this.NodeMsg = d.nodeMsg;
+          _this.nodeAttr = d.nodeAttr;
         })
         .on("mouseout", function(d) {
           d3.select(this).style("stroke", "white");
-          _this.NodeMsg = "";
+          _this.nodeAttr = "";
         })
         .call(_this.drag(_this.simulation))
         .on("click",d=>//鼠标监听
@@ -270,11 +277,11 @@
         })
         .on("mouseover", function(d) {
           d3.select(this).style("stroke", "orange");
-          _this.NodeMsg = d.nodeMsg;
+          _this.nodeAttr = d.nodeAttr;
         })
         .on("mouseout", function(d) {
           d3.select(this).style("stroke", "white");
-          _this.NodeMsg = "";
+          _this.nodeAttr = "";
         })
         .call(_this.drag(_this.simulation))
         .on("click",d=>//鼠标监听
@@ -441,92 +448,26 @@
             })
     },
 
-    search(nodeType,nodeMsg){
-      //点击\查询事件，数据写死本地
-      let tGraph = this.Graph4Update;
-      if (nodeType == "location")
-      {
-        tGraph = this.gdGraph
-      }
-      if (nodeType == "stock")
-      {
-        tGraph = this.stockGraph
-      }
-      if (nodeType == "plate")
-      {
-        tGraph = this.zbGraph
-      }
-      if (nodeType == "conception")
-      {
-        tGraph = this.tslGraph
-      }
-      if (nodeType == "conceptionTag")
-      {
-        if (this.stockGraph.conceptionExtension)
-        {
-          for(let i=0;i<this.stockGraph.conceptionList.length;i++)
-          {
-            this.stockGraph.links.pop()
-            this.stockGraph.nodes.pop()
-          }
-          this.stockGraph.conceptionExtension = false
-        }
-        else
-        {
-          for(let i=0;i<this.stockGraph.conceptionList.length;i++)
-          {
-            this.stockGraph.nodes.push({"id":this.stockGraph.conceptionList[i], "group": 2,"type":"conception"})
-            this.stockGraph.links.push({"source": "所属概念", "target": this.stockGraph.conceptionList[i],
-              "value": 2,"relation":"概念"+(i+1)},)
-          }
-          this.stockGraph.conceptionExtension = true
-        }
-        tGraph = this.stockGraph
-      }
-      this.updateGraph(tGraph);
-    }
-
-    // search(nodeType,nodeMsg)//点击/查询事件，向后端请求数据
-    // {
-    //   let _this = this
-    //   if (nodeType == "stock")
-    //   //点击节点为股票，输入股票代码（nodeMsg），返回股票信息node
+    // search(nodeType,nodeMsg){
+    //   //点击\查询事件，数据写死本地
+    //   let tGraph = this.Graph4Update;
+    //   if (nodeType == "location")
     //   {
-    //     this.axios.post("/"+nodeType,{
-    //       code:nodeMsg
-    //     })
-    //     .then(function(response)
-    //     {
-    //       if(response.status === 200)
-    //       {
-    //         let stockNode = []
-    //         let stockLink = []
-    //         let res=response.data;
-    //         _this.stockGraph.conceptionList = res.conception
-    //         _this.stockGraph.conceptionExtension = false
-    //         // res = {"id": "广东鸿图","code":"002101","company":"广东鸿图科技股份有限公司",
-    //         //   "location":"广东","plate":"主板","conception":["c1","c2"]}
-    //         stockNode.push({"id": res.id, "group": 1,"type":"stock","code":res.code})
-    //         stockNode.push({"id": res.company, "group": 2,"type":"company"})
-    //         stockNode.push({"id": res.location, "group": 2,"type":"location"})
-    //         stockNode.push({"id": res.plate, "group": 2,"type":"plate"})
-    //         stockNode.push({"id": "所属概念", "group": 2,"type":"conceptionTag"})
-    //         _this.stockGraph.nodes = stockNode
-    //         stockLink.push({"source": res.id, "target": res.company, "value": 3,"relation":"公司"})
-    //         stockLink.push({"source": res.id, "target": res.location, "value": 3,"relation":"地域"})
-    //         stockLink.push({"source": res.id, "target": res.plate, "value": 3,"relation":"板块"})
-    //         stockLink.push({"source": res.id, "target": "所属概念", "value": 3,"relation":"概念"})
-    //         _this.stockGraph.links = stockLink
-    //       }
-    //     })
-    //     .catch(function(error)
-    //     {
-    //       console.log(error)
-    //     })
-    //     this.updateGraph(this.stockGraph)
+    //     tGraph = this.gdGraph
     //   }
-    //   else if (nodeType == "conceptionTag")
-    //   //展开概念信息
+    //   if (nodeType == "stock")
+    //   {
+    //     tGraph = this.stockGraph
+    //   }
+    //   if (nodeType == "plate")
+    //   {
+    //     tGraph = this.zbGraph
+    //   }
+    //   if (nodeType == "conception")
+    //   {
+    //     tGraph = this.tslGraph
+    //   }
+    //   if (nodeType == "conceptionTag")
     //   {
     //     if (this.stockGraph.conceptionExtension)
     //     {
@@ -547,37 +488,110 @@
     //       }
     //       this.stockGraph.conceptionExtension = true
     //     }
-    //     this.updateGraph(this.stockGraph)
+    //     tGraph = this.stockGraph
     //   }
-    //   else//根据关系查询股票,nodeMsg为关系名称,nodeType为关系类型（plate/location/conception）
-    //   {
-    //     this.axios.post("/" + nodeType,{
-    //       limit:25,
-    //       relation:nodeMsg,
-    //     })
-    //     .then(function(response)
-    //     {
-    //       if(response.status === 200)
-    //       {
-    //         this.Graph4Update.nodes=response.data.nodes;//将返回节点加入Graph
-    //         // node结构：{"id": "广东鸿图", "group": 2,"type":"stock","code":"002101"}
-    //         this.Graph4Update.nodes.push({"id": nodeMsg, "group": 1,"type":nodeType})//增放中心节点
-    //         let relationLink = []//存放生成的link信息
-    //         for(let i = 0;i <response.data.length;i++)
-    //         {
-    //           relationLink.push({"source": nodeMsg, "target": response.data[i].id, "value": 3,"relation":" "})
-    //         }
-    //         this.Graph4Update.links = relationLink
-    //         this.updateGraph(this.Graph4Update)
-    //       }
-    //     })
-    //     .catch(function(error)
-    //     {
-    //       console.log(error)
-    //     })
-    //     this.initGraph(this.Graph4Update)
-    //   }
+    //   this.updateGraph(tGraph);
     // }
+
+    search(nodeType,nodeMsg)//点击/查询事件，向后端请求数据
+    {
+      let _this = this
+      if (nodeType == "stock")
+      //点击节点为股票，输入股票代码（nodeMsg），返回股票信息node
+      {
+        this.axios.post("/"+nodeType,{
+          code:nodeMsg
+        })
+        .then(function(response)
+        {
+          if(response.status === 200)
+          {
+            let stockNode = []
+            let stockLink = []
+            let res=response.data.node;
+            _this.stockGraph.conceptionList = res.conception//获取概念列表
+            _this.stockGraph.conceptionExtension = false
+            // res = {"shorthand": "广东鸿图","stockcode":"002101","industry":"行业名称",
+            // "location":"广东","plate":"主板","conception":["c1","c2"],"chinesename":"广东鸿图公司","nodeattr":"node"}
+            stockNode.push({"id": res.shorthand, "group": 1,"type":"stock","code":res.code,"nodeAttr":res.chesename})//信息写入临时节点
+            stockNode.push({"id": res.industry, "group": 2,"type":"industry"})
+            stockNode.push({"id": res.location, "group": 2,"type":"location"})
+            stockNode.push({"id": res.plate, "group": 2,"type":"plate"})
+            stockNode.push({"id": "所属概念", "group": 2,"type":"conceptionTag"})
+            _this.stockGraph.nodes = stockNode
+            stockLink.push({"source": res.id, "target": res.industry, "value": 3,"relation":"行业"})//写入关系
+            stockLink.push({"source": res.id, "target": res.location, "value": 3,"relation":"地域"})
+            stockLink.push({"source": res.id, "target": res.plate, "value": 3,"relation":"板块"})
+            stockLink.push({"source": res.id, "target": "所属概念", "value": 3,"relation":"概念"})
+            _this.stockGraph.links = stockLink
+          }
+        })
+        .catch(function(error)
+        {
+          console.log(error)
+        })
+        this.updateGraph(this.stockGraph)
+      }
+      else if (nodeType == "conceptionTag")
+      //展开概念信息
+      {
+        if (this.stockGraph.conceptionExtension)//概念已展开，弹出所有概念节点和关系，并将概念展开记为false
+        {
+          for(let i=0;i<this.stockGraph.conceptionList.length;i++)
+          {
+            this.stockGraph.links.pop()
+            this.stockGraph.nodes.pop()
+          }
+          this.stockGraph.conceptionExtension = false
+        }
+        else//概念未展开，添加节点和关系
+        {
+          for(let i=0;i<this.stockGraph.conceptionList.length;i++)
+          {
+            this.stockGraph.nodes.push({"id":this.stockGraph.conceptionList[i], "group": 2,"type":"conception"})
+            this.stockGraph.links.push({"source": "所属概念", "target": this.stockGraph.conceptionList[i],
+              "value": 2,"relation":"概念"+(i+1)},)
+          }
+          this.stockGraph.conceptionExtension = true
+        }
+        this.updateGraph(this.stockGraph)
+      }
+      else//根据关系查询股票,nodeMsg为关系名称,nodeType为关系类型（plate/location/conception）
+      {
+        this.axios.post("/" + nodeType,{
+          limit:25,
+          relation:nodeMsg,
+        })
+        .then(function(response)
+        {
+          if(response.status === 200)
+          {
+            let relationNode = []//存放生成的link信息
+            //stockNode.push({"id": res.shorthand, "group": 1,"type":"stock","code":res.code,"nodeAttr":res.chesename})//信息写入临时节
+            for(let i = 0;i <response.data.length;i++)
+            {
+              relationNode.push({"id": response.data[i].node.shorthand, "group": 1,"type":"stock",
+                "code":response.data[i].code,"nodeAttr":response.data[i].chinesename})
+            }
+            this.Graph4Update.nodes=relationNode;//将返回节点加入Graph
+
+            this.Graph4Update.nodes.push({"id": nodeMsg, "group": 1,"type":nodeType})//增放中心节点
+            let relationLink = []//存放生成的link信息
+            for(let i = 0;i <response.data.length;i++)
+            {
+              relationLink.push({"source": response.data[i].id, "target": nodeMsg, "value": 3,"relation":" "})
+            }
+            this.Graph4Update.links = relationLink
+            this.updateGraph(this.Graph4Update)
+          }
+        })
+        .catch(function(error)
+        {
+          console.log(error)
+        })
+        this.initGraph(this.Graph4Update)
+      }
+    }
 
   }
 }
