@@ -4,11 +4,14 @@ import Vue from 'vue'
 import App from './App'
 import router from './router'
 import axios from 'axios'
-import VueAxios from "vue-axios";
+import ElementUI from 'element-ui'
+import VueAxios from "vue-axios"
+import 'element-ui/lib/theme-chalk/index.css';
 
 axios.defaults.baseURL = "/api"
 axios.defaults.withCredentials = true
 Vue.use(VueAxios,axios);
+Vue.use(ElementUI)
 
 // import 'default-passive-events'
 

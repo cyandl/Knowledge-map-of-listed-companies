@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import HelloWorld from '@/components/HelloWorld'
+import Canvas from '@/components/Canvas'
 
 Vue.use(Router)
 
@@ -8,8 +8,9 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'HelloWorld',
-      component: HelloWorld
+      name: 'Canvas',
+      component: Canvas,
+      meta: { title: "个人中心" }
     }
   ]
 })
