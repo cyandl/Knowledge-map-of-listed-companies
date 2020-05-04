@@ -430,7 +430,9 @@
         .on("end", dragended);
     },
 
-    searchStock(SearchInput){//对搜索框结果进行查询，暂时合并用户筛选功能
+    searchStock(SearchInput){
+      //对搜索框结果进行查询，暂时合并用户筛选功能
+      //如果与后端整合，需将MsgBoard.vue 中 mounted 中searchName函数中的调用改为this.$parent.searchStock(data);
       this.axios.post("/searchStock",{
               searchInput:SearchInput//string,搜索框输入信息
             })
