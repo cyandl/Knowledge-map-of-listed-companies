@@ -390,8 +390,12 @@
               let stockNode = []
               let stockLink = []
               let res=response.data;
-              _this.stockGraph.conceptionList = res.concepts//获取概念列表
-              _this.stockGraph.conceptionExtension = false
+              _this.stockGraph.conceptionList = []
+              for(let i =0;i<res.concepts.length;i++)
+              {
+                _this.stockGraph.conceptionList.push(res.concepts[i].conceptname)//向二级概念列表写入概念
+              }
+              _this.stockGraph.conceptionExtension = false//概念展开标记置为false
               stockNode.push({"id": res.shorthand, "group": 1,"type":"stock","code":res.stockcode,"nodeAttr":res.chesename})//信息写入临时节点
               stockNode.push({"id": res.locations[0].provinces, "group": 2,"type":"location"})
               stockNode.push({"id": res.plates[0].platename, "group": 2,"type":"plate"})
@@ -419,30 +423,34 @@
       else if (nodeType == "conceptionTag")
         //展开概念信息
       {
-        if (this.stockGraph.conceptionExtension)//概念已展开，弹出所有概念节点和关系，并将概念展开记为false
+        console.log(_this.stockGraph)
+        if (_this.stockGraph.conceptionExtension)//概念已展开，弹出所有概念节点和关系，并将概念展开记为false
         {
-          for(let i=0;i<this.stockGraph.conceptionList.length;i++)
+          console.log("extend")
+          for(let i=0;i<_this.stockGraph.conceptionList.length;i++)
           {
-            this.stockGraph.links.pop()
-            this.stockGraph.nodes.pop()
+            _this.stockGraph.links.pop()
+            _this.stockGraph.nodes.pop()
           }
-          this.stockGraph.conceptionExtension = false
+          _this.stockGraph.conceptionExtension = false
         }
         else//概念未展开，添加节点和关系
         {
-          for(let i=0;i<this.stockGraph.conceptionList.length;i++)
+          console.log("not extend")
+          console.log(_this.stockGraph)
+          for(let i=0;i<_this.stockGraph.conceptionList.length;i++)
           {
-            this.stockGraph.nodes.push({"id":this.stockGraph.conceptionList[i], "group": 2,"type":"conception"})
-            this.stockGraph.links.push({"source": "所属概念", "target": this.stockGraph.conceptionList[i].conceptname,
+            _this.stockGraph.nodes.push({"id":_this.stockGraph.conceptionList[i], "group": 2,"type":"conception"})
+            _this.stockGraph.links.push({"source": "所属概念", "target": _this.stockGraph.conceptionList[i],
               "value": 2,"relation":"概念"+(i+1)},)
           }
-          this.stockGraph.conceptionExtension = true
+          _this.stockGraph.conceptionExtension = true
         }
-        this.updateGraph(this.stockGraph)
+        console.log(_this.stockGraph)
+        _this.updateGraph(_this.stockGraph)
       }
       else//根据关系查询股票,nodeMsg为关系名称,nodeType为关系类型（plate/location/conception）
       {
-        let _this = this
         this.axios({
           method:"post",
           url:"/" + nodeType,//这个是请求后端的哪个url的名称，跟后端的要一样
@@ -464,7 +472,7 @@
               }
               _this.Graph4Update.nodes=relationNode;//将返回节点加入Graph
 
-              _this.Graph4Update.nodes.push({"id": nodeMsg, "group": 1,"type":nodeType})//增放中心节点，即点击的节点
+              _this.Graph4Update.nodes.push({"id": nodeMsg, "group": 2,"type":nodeType})//增放中心节点，即点击的节点
               let relationLink = []//存放生成的link信息
               for(let i = 0;i <response.data.length;i++)
               {
@@ -477,7 +485,6 @@
           {
             console.log(error)
           })
-        _this.initGraph(_this.Graph4Update)
       }
     },
 
@@ -485,7 +492,7 @@
       const _this = this
       // const nodes = data.nodes.map(d => Object.create(d));
       // const links = data.links.map(d => Object.create(d));
-      console.log(data)
+      // console.log(data)
       let links = data.links
       let nodes = data.nodes
 
@@ -552,8 +559,6 @@
         .selectAll("text")
         .data(links)
         .join("text")
-        // .attr("x",100)
-        // .attr("y",80)
         .style("text-anchor", "middle")
         .style("fill","white")
         .style("font-size","20px")
@@ -571,7 +576,6 @@
       _this.simulation.nodes(nodes)
       _this.simulation.force("link").links(links)
       _this.simulation.alpha(1).restart()
-      // console.log(_this.simulation.nodes(nodes))
 
     },
 
