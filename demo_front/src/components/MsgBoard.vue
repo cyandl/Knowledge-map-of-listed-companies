@@ -38,46 +38,46 @@
         }
       },
     methods: {
-      // searchName(data) {//搜索按钮绑定函数,本地调试
-      //   let _this = this
-      //   _this.searchRes = _this.testRes
-      // },
-
-      searchName(data) {//搜索按钮绑定函数，后端交互
+      searchName(data) {//搜索按钮绑定函数,本地调试
         let _this = this
-        this.axios.post("/searchStock",{
-          searchInput:data//string,搜索框输入信息
-        })
-          .then(function(response)
-          {
-            if(response.status === 200)
-            {
-              let stockNode = []//存放生成的Node信息
-              for(let i = 0;i < response.data.length;i++)
-              {
-                stockNode.push({"id": response.data[i].shorthand, "group": 1,"type":"stock",
-                  "code":response.data[i].stockcode,"nodeAttr":response.data[i].chinesename})
-              }
-              _this.searchRes = stockNode
-            }
-          })
-          .catch(function(error)
-          {
-            console.log(error)
-          })
+        _this.searchRes = _this.testRes
       },
+
+      // searchName(data) {//搜索按钮绑定函数，后端交互
+      //   let _this = this
+      //   this.axios.post("/searchStock",{
+      //     searchInput:data//string,搜索框输入信息
+      //   })
+      //     .then(function(response)
+      //     {
+      //       if(response.status === 200)
+      //       {
+      //         let stockNode = []//存放生成的Node信息
+      //         for(let i = 0;i < response.data.length;i++)
+      //         {
+      //           stockNode.push({"id": response.data[i].shorthand, "group": 1,"type":"stock",
+      //             "code":response.data[i].stockcode,"nodeAttr":response.data[i].chinesename})
+      //         }
+      //         _this.searchRes = stockNode
+      //       }
+      //     })
+      //     .catch(function(error)
+      //     {
+      //       console.log(error)
+      //     })
+      // },
 
       searchStock(code)//选中radio button 更改画布
       {
-        // if(code == "002101")
-        // {
-        //   this.$parent.search("stock", code);//调用Canvas.vue的search函数，更新画布
-        // }
-        // else
-        // {
-        //   this.$parent.search("plate", code);//调用Canvas.vue的search函数，更新画布
-        // }
-        this.$parent.search("stock", code);//调用Canvas.vue的search函数，更新画布
+        if(code == "002101")
+        {
+          this.$parent.search("stock", code);//调用Canvas.vue的search函数，更新画布
+        }
+        else
+        {
+          this.$parent.search("plate", code);//调用Canvas.vue的search函数，更新画布
+        }
+        // this.$parent.search("stock", code);//调用Canvas.vue的search函数，更新画布
       }
 
     }
