@@ -2,8 +2,8 @@
   <div style="width: 100%;" >
     <div class="container" >
     </div>
-    <MsgBoard style="height: 40%;" ></MsgBoard>
     <div>
+    <MsgBoard style="width: 100%;" ></MsgBoard>
       <el-card class="box-card">
         <div>
           {{nodeAttr}}
@@ -367,7 +367,7 @@
     //     tGraph = this.stockGraph
     //   }
     //   this.updateGraph(tGraph);
-    // }
+    // },
 
     search(nodeType,nodeMsg)//点击/查询事件，向后端请求数据（d.type,d.id）也就是mounted初始化请求里的格式
     {
@@ -396,7 +396,7 @@
                 _this.stockGraph.conceptionList.push(res.concepts[i].conceptname)//向二级概念列表写入概念
               }
               _this.stockGraph.conceptionExtension = false//概念展开标记置为false
-              stockNode.push({"id": res.shorthand, "group": 1,"type":"stock","code":res.stockcode,"nodeAttr":res.chesename})//信息写入临时节点
+              stockNode.push({"id": res.shorthand, "group": 1,"type":"stock","code":res.stockcode,"nodeAttr":res.chinesename})//信息写入临时节点
               stockNode.push({"id": res.locations[0].provinces, "group": 2,"type":"location"})
               stockNode.push({"id": res.plates[0].platename, "group": 2,"type":"plate"})
               stockNode.push({"id": "所属概念", "group": 2,"type":"conceptionTag"})
