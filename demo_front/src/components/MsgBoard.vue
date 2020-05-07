@@ -1,6 +1,6 @@
 <template>
   <div >
-    <el-container >
+    <el-container>
       <el-input
         suffix-icon="el-icon-search"
         placeholder="请输入股票代码或简称"
@@ -9,7 +9,6 @@
       </el-input>
       <el-button round @click="searchName">搜索股票</el-button>
     </el-container>
-
     <div>
       <el-form>
       <el-radio-group v-model="ChosenRadio" @change="searchStock(ChosenRadio)">
@@ -27,8 +26,12 @@
     data(){//这个好像是返回给后端的数据
       return{
         searchRes:[],
-        // testRes:[{"id": "广东鸿图", "group": 1,"type":"stock","code":"002101"},
-        //     {"id": "东方财富", "group": 1,"type":"stock","code":"300059"}],
+        testRes:[
+          {"id": "广东鸿图", "group": 1,"type":"stock","code":"002101","nodeAttr":"广东鸿图科技股份有限公司"},
+          {"id": "文化长城", "group": 1,"type":"stock","code":"300089","nodeAttr":"广东文化长城集团股份有限公司"},
+          {"id": "白云山", "group": 1,"type":"stock","code":"600332","nodeAttr":"广州白云山制药股份有限公司"},
+          {"id": "东方财富", "group": 1,"type":"stock","code":"300059","nodeAttr":"东方财富信息股份有限公司"},
+          {"id": "中国石油", "group": 1,"type":"stock","code":"601857","nodeAttr":"中国石油天然气集团公司"},],
         searchInput:"",
         ChosenRadio:"",
       }
@@ -87,28 +90,6 @@
 </script>
 
 <style scoped>
-  .el-container {
-    height: 100%;
-  }
-  .el-header{
-    background-color: #B3C0D1;
-    color: #333;
-    text-align: center;
-    /*line-height: 5px;*/
-    height: 100%;
-  }
-  .el-footer {
-    background-color: #B3C0D1;
-    color: #333;
-    text-align: center;
-    line-height: 50px;
-  }
 
-  .el-main {
-    background-color: #E9EEF3;
-    color: #333;
-    text-align: center;
-    line-height: 260px;
-  }
 
 </style>

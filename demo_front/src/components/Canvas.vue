@@ -1,14 +1,12 @@
 <template>
-  <div style="width: 100%;" >
-    <div class="container" >
+  <div class="BackContainer" >
+    <div class="CanvasRegion" >
     </div>
-    <div>
-    <MsgBoard style="width: 100%;" ></MsgBoard>
-      <el-card class="box-card">
-        <div>
-          {{nodeAttr}}
-        </div>
-      </el-card>
+    <div class="BoardRegion">
+    <MsgBoard></MsgBoard>
+    <el-card class="box-card">
+        {{nodeAttr}}
+    </el-card>
     </div>
   </div>
 </template>
@@ -22,9 +20,10 @@
   data () {
     // node结构：{"id": "广东鸿图", "group": 1,"type":"stock","code":"002101","nodeAttr":"广东鸿图科技股份有限公司"},
     return {
-      width:800,
-      height:500,
-      colorList:["blue","pink","blue","pink","blue","pink","blue","pink","blue","pink"],
+      width:750,
+      height:460,
+      colorList:["#57C7E3","#ECB5C9","#FFC454","#4C8EDA","#D9C8AE","#C990C0","#8DCC93","#57C7E3"],
+      //关系图谱的中心节点颜色、股票、地域、主板、行业、概念、子概念
       g:null,
       blank:[],
       nodes:[],//使用全局变量以更新画布
@@ -142,11 +141,12 @@
       // const links = data.links.map(d => Object.create(d));
 
       _this.simulation = d3.forceSimulation(nodes)
-        .force("link", d3.forceLink(links).id(d => d.id).distance(200))
+        .force("link", d3.forceLink(links).id(d => d.id).distance(130))
         .force("charge", d3.forceManyBody().strength(-30))
+        .force("collide", d3.forceCollide().strength(50))
         .force("center", d3.forceCenter(_this.width / 2, _this.height / 2));
 
-      const svg = d3.select(".container")
+      const svg = d3.select(".CanvasRegion")
         .append("svg")
         .attr("viewBox", [0, 0, _this.width, _this.height]);
       _this.g = svg.append("g")
@@ -172,7 +172,7 @@
         .selectAll("circle")
         .data(nodes)
         .join("circle")
-        .attr("r", 40)
+        .attr("r", 30)
         .attr("fill", function (d) {
           return _this.colorList[d.group%10];
         })
@@ -194,34 +194,13 @@
       _this.nodes.append("title")
         .text(d => d.id)
 
-        // .on("click", queryTest())
-
-      _this.nodeNameText = _this.g.append("g")//节点的文字显示
-      .selectAll("text")
-      .data(nodes)
-      .join("text")
-      .attr("fill","#3edb14")
-      .classed("nodeName",true)
-      .attr("font-size",20)
-      .attr("class","nodeName")
-      .text(function (d)
-      {
-          return d.id
-      })
-      .attr("dx",function(){
-        return this.getBoundingClientRect().width/2*(-1);
-      })
-      .attr("dy",60)
-      ;
-
       _this.linkRelation = _this.g.append("g")//连接的文字显示
       .selectAll("text")
       .data(links)
       .join("text")
       .style("text-anchor", "middle")
-      .style("fill","white")
-      .style("font-size","20px")
-      .style("font-weight", "bold")
+      .style("fill","#71d7ff")
+      .style("font-size","15")
       .append("textPath")
       .attr("class","linkRelation")
       .attr(
@@ -232,6 +211,26 @@
       {
         return d.relation
       })
+
+      _this.nodeNameText = _this.g.append("g")//节点的文字显示
+        .selectAll("text")
+        .data(nodes)
+        .join("text")
+        .attr("fill","white")
+        .attr("font-weight","bold")
+        .classed("nodeName",true)
+        .attr("font-size",15)
+        .attr("class","nodeName")
+        .text(function (d)
+        {
+          return d.id
+        })
+        .attr("dx",function(){
+          return this.getBoundingClientRect().width/2*(-1)+8;
+        })
+        .attr("dy",45)
+      ;
+
       const positiveMarker = svg.append("marker")//连接线的箭头效果，正反方向
         .attr("id","positiveMarker")
         .attr("orient","auto")
@@ -239,7 +238,7 @@
         .attr("markerUnits","strokeWidth")
         .attr("markerUnits", "userSpaceOnUse")
         .attr("viewBox", "0 -5 10 10 ")
-        .attr("refX",45)
+        .attr("refX",35)
         .attr("refY",0)
         .attr("markerWidth",12)
         .attr("markerHeight",12)
@@ -255,7 +254,7 @@
         .attr("markerUnits","strokeWidth")
         .attr("markerUnits", "userSpaceOnUse")
         .attr("viewBox", "0 -5 10 10")
-        .attr("refX",135)
+        .attr("refX",95)
         .attr("refY",0)
         .attr("markerWidth",12)
         .attr("markerHeight",12)
@@ -295,8 +294,8 @@
           .attr("x",d => d.x)
           .attr("y",d => d.y);
 
-        _this.linkRelation
-          .attr("font-size",20)
+        // _this.linkRelation
+        //   .attr("font-size",15)
       });
     },
 
@@ -371,6 +370,7 @@
 
     search(nodeType,nodeMsg)//点击/查询事件，向后端请求数据（d.type,d.id）也就是mounted初始化请求里的格式
     {
+      let extensionLimit = 10
       let _this = this
       if (nodeType == "stock")
         //点击节点为股票，输入股票简称（nodeMsg），返回股票信息node
@@ -398,12 +398,12 @@
               _this.stockGraph.conceptionExtension = false//概念展开标记置为false
               stockNode.push({"id": res.shorthand, "group": 1,"type":"stock","code":res.stockcode,"nodeAttr":res.chinesename})//信息写入临时节点
               stockNode.push({"id": res.locations[0].provinces, "group": 2,"type":"location"})
-              stockNode.push({"id": res.plates[0].platename, "group": 2,"type":"plate"})
-              stockNode.push({"id": "所属概念", "group": 2,"type":"conceptionTag"})
+              stockNode.push({"id": res.plates[0].platename, "group": 3,"type":"plate"})
+              stockNode.push({"id": "所属概念", "group": 5,"type":"conceptionTag"})
               let StockIndustry = res.industries
               for(let i =0;i<StockIndustry.length;i++)
               {
-                stockNode.push({"id": StockIndustry[i].name, "group": 2,"type":"industry"})
+                stockNode.push({"id": StockIndustry[i].name, "group": 4,"type":"industry"})
                 stockLink.push({"source": res.shorthand, "target": StockIndustry[i].name, "value": 3,"relation":"行业"+(i+1)})//写入关系
               }
               _this.stockGraph.nodes = stockNode
@@ -423,11 +423,16 @@
       else if (nodeType == "conceptionTag")
         //展开概念信息
       {
-        console.log(_this.stockGraph)
-        if (_this.stockGraph.conceptionExtension)//概念已展开，弹出所有概念节点和关系，并将概念展开记为false
+
+        let limit = Math.min(_this.stockGraph.conceptionList.length,extensionLimit)
+        if (limit==0)
+        {
+          _this.noConceptionMsg()
+        }
+        else if (_this.stockGraph.conceptionExtension)//概念已展开，弹出所有概念节点和关系，并将概念展开记为false
         {
           console.log("extend")
-          for(let i=0;i<_this.stockGraph.conceptionList.length;i++)
+          for(let i=0;i<limit;i++)
           {
             _this.stockGraph.links.pop()
             _this.stockGraph.nodes.pop()
@@ -436,13 +441,11 @@
         }
         else//概念未展开，添加节点和关系
         {
-          console.log("not extend")
-          console.log(_this.stockGraph)
-          for(let i=0;i<_this.stockGraph.conceptionList.length;i++)
+          for(let i=0;i<limit;i++)
           {
-            _this.stockGraph.nodes.push({"id":_this.stockGraph.conceptionList[i], "group": 2,"type":"conception"})
+            _this.stockGraph.nodes.push({"id":_this.stockGraph.conceptionList[i], "group": 6,"type":"conception"})
             _this.stockGraph.links.push({"source": "所属概念", "target": _this.stockGraph.conceptionList[i],
-              "value": 2,"relation":"概念"+(i+1)},)
+              "value": 3,"relation":"概念"+(i+1)},)
           }
           _this.stockGraph.conceptionExtension = true
         }
@@ -472,7 +475,7 @@
               }
               _this.Graph4Update.nodes=relationNode;//将返回节点加入Graph
 
-              _this.Graph4Update.nodes.push({"id": nodeMsg, "group": 2,"type":nodeType})//增放中心节点，即点击的节点
+              _this.Graph4Update.nodes.push({"id": nodeMsg, "group": 0,"type":nodeType})//增放中心节点，即点击的节点
               let relationLink = []//存放生成的link信息
               for(let i = 0;i <response.data.length;i++)
               {
@@ -515,7 +518,7 @@
         .selectAll("circle")
         .data(nodes)
         .join("circle")
-        .attr("r", 40)
+        .attr("r", 30)
         .attr("fill", function (d) {
           return _this.colorList[d.group%10];
         })
@@ -535,34 +538,14 @@
       ;
       _this.nodes.append("title")
         .text(d => d.id)
-      _this.nodeNameText = _this.g.append("g")//节点的文字显示
-        .selectAll("text")
-        .data(nodes)
-        .join("text")
-        .attr("fill","#3edb14")
-        .classed("nodeName",true)
-        // .attr("fill","white")
-        .attr("font-size",20)
-        .attr("class","nodeName")
-        .text(function (d)
-        {
-          return d.id;
-        })
-        .attr("dx",function(){
-          // -10;
-          return this.getBoundingClientRect().width/2*(-1);
-        })
-        .attr("dy",60);
-
 
       _this.linkRelation = _this.g.append("g")//连接的文字显示
         .selectAll("text")
         .data(links)
         .join("text")
         .style("text-anchor", "middle")
-        .style("fill","white")
-        .style("font-size","20px")
-        .style("font-weight", "bold")
+        .style("fill","#71d7ff")
+        .style("font-size","15")
         .append("textPath")
         .attr("class","linkRelation")
         .attr(
@@ -573,12 +556,42 @@
         {
           return d.relation
         })
+
+      _this.nodeNameText = _this.g.append("g")//节点的文字显示
+        .selectAll("text")
+        .data(nodes)
+        .join("text")
+        .attr("fill","white")
+        .classed("nodeName",true)
+        // .attr("fill","white")
+        .attr("font-size",15)
+        .attr("font-weight","bold")
+        .attr("class","nodeName")
+        .text(function (d)
+        {
+          return d.id;
+        })
+        .attr("dx",function(){
+          // -10;
+          return this.getBoundingClientRect().width/2*(-1)+8;
+        })
+        .attr("dy",45);
+
+
       _this.simulation.nodes(nodes)
       _this.simulation.force("link").links(links)
+      _this.simulation
+        .force("link", d3.forceLink(links).id(d => d.id).distance(130))
+        .force("charge", d3.forceManyBody().strength(-500))
+        .force("collide", d3.forceCollide().strength(200))
+        .force("center", d3.forceCenter(_this.width / 2, _this.height / 2));
       _this.simulation.alpha(1).restart()
 
     },
 
+    noConceptionMsg() {
+      this.$message('未找到关联的概念信息');
+    },
   }
 }
 </script>
@@ -599,11 +612,16 @@ li {
 a {
   color: #42b983;
 }
-  .container
+  .BackContainer{
+    display: flex;
+    justify-content: space-between;
+    /*overflow: hidden;*/
+  }
+  .CanvasRegion
   {
     width:72%;
-    float: left;
-    height: auto;
+    height: 100%;
+    flex-shrink:0;
     border: 1px solid #2c3e50;
     border-radius: 8px;
     /*margin-top: 40px;*/
@@ -613,22 +631,11 @@ a {
     hsla(0,0%,100%,.1),hsla(0,0%,100%,.1) 15px,
     transparent 0, transparent 30px);
   }
-  .right{
-    height: auto;
+  .BoardRegion
+  {
     width:25%;
-    background: #5cd9cf;
-    float: right;
   }
-  #searchPage
-  {
-    height: 250px;
-  }
-  #searchResult
-  {
-    display: None;
-  }
-  #boardPage
-  {
-    height:310px;
+  .box-card{
+
   }
 </style>
