@@ -1,27 +1,61 @@
 <template>
   <div class="BackContainer" >
-    <div class="CanvasRegion" >
-    </div>
-    <div class="BoardRegion">
-    <MsgBoard></MsgBoard>
-    <el-card class="box-card" >
-    <div>{{stockAttr.shorthand}} {{stockAttr.code}}
-      <span v-bind:class="{greenPrice:isGreen, redPrice:isRed}">{{stockAttr.price}}</span>
-    </div>
-      <div v-for="item in nodeAttr">
-        {{item.type}}:{{item.msg}}
+      <div class="CanvasRegion">
       </div>
-    </el-card>
+    <div class="BoardRegion">
+      <el-container>
+        <el-input
+          suffix-icon="el-icon-search"
+          placeholder="请输入股票代码或简称"
+          v-model="searchInput"
+          clearable>
+        </el-input>
+        <el-button round @click="searchName">搜索股票</el-button>
+      </el-container>
+      <el-tabs type="border-card" v-model="activeTab" >
+        <el-tab-pane label="搜索结果" name="搜索结果">
+            <el-card v-for="item in searchRes" style="font-size: 5px">
+              <el-radio-group v-model="ChosenRadio" @change="search('stock',ChosenRadio)">
+                <el-radio  :label="item.id">{{item.id}} {{item.code}}
+                </el-radio>
+              </el-radio-group>
+              <div v-bind:class="{greenPrice:item.isGreen, redPrice:item.isRed}">{{item.price}} {{item.pricelimit}}</div>
+              <div >
+                {{item.chinesename}}
+              </div>
+            </el-card>
+        </el-tab-pane>
+        <el-tab-pane label="信息详情" name="信息详情">
+          <el-card class="box-card" >
+            <div>{{stockAttr.shorthand}} {{stockAttr.code}}</div>
+            <div v-bind:class="{greenPrice:isGreen, redPrice:isRed}">{{stockAttr.price}} {{stockAttr.pricelimit}}</div>
+            <div>{{stockAttr.openprice}} {{stockAttr.closeprice}}</div>
+            <div>{{stockAttr.topprice}} {{stockAttr.bottomprice}}</div>
+            <div v-for="item in nodeAttr">
+              {{item.type}}:{{item.msg}}
+            </div>
+            <a :href="tabAttr.website" target="_blank" class="buttonText">{{tabAttr.webTag}}</a>
+            <el-tabs >
+              <el-tab-pane label="主要业务">{{tabAttr.business}}</el-tab-pane>
+              <el-tab-pane label="公司介绍">{{tabAttr.introduction}}</el-tab-pane>
+            </el-tabs>
+          </el-card>
+        </el-tab-pane>
+        <el-tab-pane label="股价走势">
+          <KChart> </KChart>
+        </el-tab-pane>
+      </el-tabs>
     </div>
   </div>
 </template>
 
 <script>
   import * as d3 from 'd3'
-  import MsgBoard from "./MsgBoard";
+  import KChart from "./KChart";
+
   export default {
   name: 'Canvas',
-  components:{MsgBoard},
+  components:{KChart},
   data () {
     // node结构：{"id": "广东鸿图", "group": 1,"type":"stock","code":"002101","nodeAttr":"广东鸿图科技股份有限公司"},
     return {
@@ -32,14 +66,19 @@
       price:{},
       colorList:["#57C7E3","#ECB5C9","#FFC454","#4C8EDA","#D9C8AE","#C990C0","#8DCC93","#57C7E3"],
       //关系图谱的中心节点颜色、股票、地域、主板、行业、概念、子概念
+      ChosenRadio:"",
+      searchRes:[],
+      searchInput:"",
       g:null,
       stockAttr: {},
+      tabAttr:{},
       blank:[],
       nodes:[],//使用全局变量以更新画布
       links:[],
       nodeNameText:[],
       linkRelation:[],
       nodeAttr:[],
+      activeTab:"",
       simulation:null,
       Graph4Update:{
         "nodes":[{"id": "广东鸿图", "group": 1,"type":"stock","code":"002101","nodeAttr":"广东鸿图科技股份有限公司"},
@@ -67,49 +106,6 @@
         "conceptionList":["特斯拉概念","国资重组"],
         "conceptionExtension":false,
       },
-      gdGraph:{
-        "nodes":[
-          {"id": "广东鸿图", "group": 1,"type":"stock","code":"002101","nodeAttr":"广东鸿图科技股份有限公司"},
-          {"id": "文化长城", "group": 1,"type":"stock","code":"300089","nodeAttr":"广东文化长城集团股份有限公司"},
-          {"id": "白云山", "group": 1,"type":"stock","code":"600332","nodeAttr":"广州白云山制药股份有限公司"},
-          {"id": "广东", "group": 2,"type":"location"},
-        ],
-        "links":[
-          {"source": "广东", "target": "白云山", "value": 1,"relation":" "},
-          {"source": "广东", "target": "广东鸿图", "value": 10,"relation":" "},
-          {"source": "广东", "target": "文化长城", "value": 8,"relation":" "},
-        ]
-      },
-      // zbGraph:{
-      //   "nodes":[
-      //     {"id": "广东鸿图", "group": 1,"type":"stock","code":"002101","nodeAttr":"广东鸿图科技股份有限公司"},
-      //     {"id": "文化长城", "group": 1,"type":"stock","code":"300089","nodeAttr":"广东文化长城集团股份有限公司"},
-      //     {"id": "白云山", "group": 1,"type":"stock","code":"600332","nodeAttr":"广州白云山制药股份有限公司"},
-      //     {"id": "东方财富", "group": 1,"type":"stock","code":"300059","nodeAttr":"东方财富信息股份有限公司"},
-      //     {"id": "中国石油", "group": 1,"type":"stock","code":"601857","nodeAttr":"中国石油天然气集团公司"},
-      //     {"id": "主板", "group": 2,"type":"plate"},
-      //   ],
-      //   "links":[
-      //     {"source": "主板", "target": "白云山", "value": 1,"relation":" "},
-      //     {"source": "主板", "target": "广东鸿图", "value": 10,"relation":" "},
-      //     {"source": "主板", "target": "东方财富", "value": 8,"relation":" "},
-      //     {"source": "主板", "target": "中国石油", "value": 8,"relation":" "},
-      //     {"source": "主板", "target": "文化长城", "value": 8,"relation":" "},
-      //   ]
-      // },
-      // tslGraph:{
-      //   "nodes":[
-      //     {"id": "广东鸿图", "group": 1,"type":"stock","code":"002101","nodeAttr":"广东鸿图科技股份有限公司"},
-      //     {"id": "华特气体","group": 1,"type":"stock","code":"688268","nodeAttr":"广东华特气体股份有限公司"},
-      //     {"id": "虹软科技", "group": 1,"type":"stock","code":"688088","nodeAttr":"虹软科技股份有限公司"},
-      //     {"id": "特斯拉概念", "group": 2,"type":"conception"},
-      //   ],
-      //   "links":[
-      //     {"source": "特斯拉概念", "target": "华特气体", "value": 1,"relation":" "},
-      //     {"source": "特斯拉概念", "target": "广东鸿图", "value": 10,"relation":" "},
-      //     {"source": "特斯拉概念", "target": "虹软科技", "value": 8,"relation":" "},
-      //   ]
-      // }
     }
   },
 
@@ -123,24 +119,27 @@
       this.axios.post("/init",{
         limit:25
       })//初始化页面，向后端发送请求
-        .then(function(response)
+        .then(function(res)
         {
-          if(response.status === 200)
+          if(res.status === 200)
           {
-            let stockNode = []//存放生成的Node信息
-            for(let i = 0;i < response.data.length;i++)
+            let plateNode = []//存放生成的Node信息
+            for(let i = 0;i < res.data.length;i++)
             {
-              let resAttr = []//属性列表
-              resAttr.push({"type":"公司全称","msg":response.data[i].chinesename})
-              resAttr.push({"type":"英文名称","msg":response.data[i].englishname})
-              resAttr.push({"type":"交易所","msg":response.data[i].market})
-              resAttr.push({"type":"公司市值","msg":response.data[i].regcapital+"元"})
-              resAttr.push({"type":"利润","msg":response.data[i].profit+"元"})
-              resAttr.push({"type":"雇员数量","msg":response.data[i].employee+"人"})
-              stockNode.push({"id": response.data[i].shorthand, "group": 1,"type":"stock",
-                "code":response.data[i].stockcode.substr(2,8),"nodeAttr":resAttr})
+              console.log(res.data)
+              plateNode.push({"id":res.data[i].platename,"group": 3,"type":"plate"})
+              // let resAttr = []//属性列表
+              // resAttr.push({"type":"公司全称","msg":response.data[i].chinesename})
+              // resAttr.push({"type":"英文名称","msg":response.data[i].englishname})
+              // resAttr.push({"type":"交易所","msg":response.data[i].market})
+              // resAttr.push({"type":"公司市值","msg":response.data[i].regcapital+"元"})
+              // resAttr.push({"type":"利润","msg":response.data[i].profit+"元"})
+              // resAttr.push({"type":"雇员数量","msg":response.data[i].employee+"人"})
+              // stockNode.push({"id": response.data[i].shorthand, "group": 1,"type":"stock",
+              //   "code":response.data[i].stockcode.substr(2,8),"nodeAttr":resAttr})
             }
-            _this.Graph4Update.nodes=stockNode;//将返回节点加入Graph
+            console.log(plateNode)
+            _this.Graph4Update.nodes=plateNode;//将返回节点加入Graph
             _this.initGraph(_this.Graph4Update)//初始化画布
           }
         })
@@ -150,11 +149,9 @@
         })},
 
     initGraph(data){
-      var _this = this
+      let _this = this
       const links = data.links
       const nodes = data.nodes
-      // const nodes = data.nodes.map(d => Object.create(d));
-      // const links = data.links.map(d => Object.create(d));
 
       _this.simulation = d3.forceSimulation(nodes)
         .force("link", d3.forceLink(links).id(d => d.id).distance(130))
@@ -170,7 +167,6 @@
         // svg.attr("transform",d3.event.transform)
         _this.g.attr("transform",d3.event.transform)
       }))
-
 
       _this.links = _this.g.append("g")//节点的关系连线
         .attr("marker-end","url(#positiveMarker)")
@@ -204,17 +200,22 @@
               }
             }).then(function(res) {
               _this.stockAttr = {"shorthand":d.id,"code":d.code,"price":"股价:"+res.data[2],
-                "openprice":"开盘价:"+res.data[0],"closeprice":"收盘价:"+res.data[1],"pricelimit":"涨跌幅:"+res.data[5],
+                "openprice":"开盘价:"+res.data[0],"closeprice":"收盘价:"+res.data[1],"pricelimit":"涨跌幅:"+res.data[5]+"%",
                 "topprice":"最高价:"+res.data[3],"bottomprice":"最低价:"+res.data[4]};
               _this.changeColor(res.data[5].substr(0,1))
               _this.nodeAttr = d.nodeAttr;
+              _this.tabAttr = {"website":d.website,
+                "webTag":"公司网址："+d.website,
+              "business":d.business,
+                "introduction":d.introduction}
+              _this.activeTab = "信息详情"
             });
           }
         })
         .on("mouseout", function(d) {
           d3.select(this).style("stroke", "white");
-          _this.stockAttr = ""
-          _this.nodeAttr = "";
+          // _this.stockAttr = ""
+          // _this.nodeAttr = "";
         })
         .call(_this.drag(_this.simulation))
         .on("click",d=>//鼠标监听
@@ -429,15 +430,22 @@
               }
 
               let resAttr = []//属性列表
-              resAttr.push({"type":"公司全称","msg":res.chinesename})
-              resAttr.push({"type":"英文名称","msg":res.englishname})
-              resAttr.push({"type":"交易所","msg":res.market})
-              resAttr.push({"type":"公司市值","msg":res.regcapital+"元"})
-              resAttr.push({"type":"利润","msg":res.profit+"元"})
-              resAttr.push({"type":"雇员数量","msg":res.employee+"人"})
+              resAttr.push({"type":"公司全称","msg":response.data[i].chinesename})
+              resAttr.push({"type":"英文名称","msg":response.data[i].englishname})
+              resAttr.push({"type":"公司法人","msg":response.data[i].chairman})
+              resAttr.push({"type":"雇员数量","msg":response.data[i].employee+"人"})
+              resAttr.push({"type":"交易所","msg":response.data[i].market})
+              resAttr.push({"type":"公司市值","msg":response.data[i].regcapital+"元"})
+              resAttr.push({"type":"总股本","msg":response.data[i].profit+"亿元"})
+              resAttr.push({"type":"公司地址","msg":response.data[i].office})
+              // resAttr.push({"type":"公司官网","msg":response.data[i].website})
+              // resAttr.push({"type":"主营业务","msg":response.data[i].business})
+              // resAttr.push({"type":"公司简介","msg":response.data[i].introduction})
 
               _this.stockGraph.conceptionExtension = false//概念展开标记置为false
-              stockNode.push({"id": res.shorthand, "group": 1,"type":"stock","code":res.stockcode.substr(2,8),"nodeAttr":resAttr})//信息写入临时节点
+              stockNode.push({"id": res.shorthand, "group": 1,"type":"stock","code":res.stockcode.substr(2,8),
+                "website":'https://'+response.data[i].website,"business":response.data[i].business,
+                "introduction":response.data[i].introduction,"nodeAttr":resAttr})//信息写入临时节点
               stockNode.push({"id": res.locations[0].provinces, "group": 2,"type":"location"})
               stockNode.push({"id": res.plates[0].platename, "group": 3,"type":"plate"})
               stockNode.push({"id": "所属概念", "group": 5,"type":"conceptionTag"})
@@ -514,11 +522,18 @@
                 let resAttr = []//属性列表
                 resAttr.push({"type":"公司全称","msg":response.data[i].chinesename})
                 resAttr.push({"type":"英文名称","msg":response.data[i].englishname})
+                resAttr.push({"type":"公司法人","msg":response.data[i].chairman})
+                resAttr.push({"type":"雇员数量","msg":response.data[i].employee+"人"})
                 resAttr.push({"type":"交易所","msg":response.data[i].market})
                 resAttr.push({"type":"公司市值","msg":response.data[i].regcapital+"元"})
-                resAttr.push({"type":"利润","msg":response.data[i].profit+"元"})
-                resAttr.push({"type":"雇员数量","msg":response.data[i].employee+"人"})
+                resAttr.push({"type":"总股本","msg":response.data[i].profit+"亿元"})
+                resAttr.push({"type":"公司地址","msg":response.data[i].office})
+                // resAttr.push({"type":"公司官网","msg":response.data[i].website})
+                // resAttr.push({"type":"主营业务","msg":response.data[i].business})
+                // resAttr.push({"type":"公司简介","msg":response.data[i].introduction})
                 relationNode.push({"id": response.data[i].shorthand, "group": 1,"type":"stock",
+                  "website":'https://'+response.data[i].website,"business":response.data[i].business,
+                  "introduction":response.data[i].introduction,
                   "code":response.data[i].stockcode.substr(2,8),"nodeAttr":resAttr})
               }
               _this.Graph4Update.nodes=relationNode;//将返回节点加入Graph
@@ -588,17 +603,22 @@
               // endresult[5] = pricelimit;//涨跌幅
             }).then(function(res) {
               _this.stockAttr = {"shorthand":d.id,"code":d.code,"price":"股价:"+res.data[2],
-                "openprice":"开盘价:"+res.data[0],"closeprice":"收盘价:"+res.data[1],"pricelimit":"涨跌幅:"+res.data[5],
+                "openprice":"开盘价:"+res.data[0],"closeprice":"收盘价:"+res.data[1],"pricelimit":"涨跌幅:"+res.data[5]+"%",
                 "topprice":"最高价:"+res.data[3],"bottomprice":"最低价:"+res.data[4]};
               _this.changeColor(res.data[5].substr(0,1))
               _this.nodeAttr = d.nodeAttr;
+              _this.tabAttr = {"website":d.website,
+                "webTag":"公司网址："+d.website,
+                "business":d.business,
+                "introduction":d.introduction}
+              _this.activeTab = "信息详情";
             });
           }
         })
         .on("mouseout", function(d) {
           d3.select(this).style("stroke", "white");
-          _this.stockAttr = "";
-          _this.nodeAttr = "";
+          // _this.stockAttr = "";
+          // _this.nodeAttr = "";
         })
         .call(_this.drag(_this.simulation))
         .on("click",d=>//鼠标监听
@@ -659,6 +679,53 @@
 
     },
 
+    searchName() {//搜索按钮绑定函数，后端交互
+      let _this = this
+      this.axios({
+        method:"post",
+        url:"/queryByName",//这个是请求后端的哪个url的名称，跟后端的要一样
+        params: {//请求提交给后端的参数,用params的key-value形式
+          chinesename: _this.searchInput,//提交的数据内容
+          //region:this.form.region
+        }
+      })
+        .then(function(response)
+        {
+          if(response.status === 200)
+          {
+            let stockNode = []//存放生成的Node信息
+            let resLimit = Math.min(response.data.length,5)
+            for(let i = 0;i <resLimit ;i++)
+            {
+              let code = response.data[i].stockcode.substr(2,8)
+              _this.axios({
+                method:"post",
+                url:"/price",
+                params: {//请求提交给后端的参数,用params的key-value形式
+                  "stockcode":code,
+                }
+              }).then(function(res)
+              {
+                _this.changeColor(res.data[5].substr(0,1))//传入涨跌幅的符号
+                stockNode.push({"id": response.data[i].shorthand, "group": 1,"type":"stock",
+                  "code":code,"chinesename":response.data[i].chinesename,"price":"股价:"+res.data[2],
+                  "openprice":"开盘价:"+res.data[0],"closeprice":"收盘价:"+res.data[1],"pricelimit":"涨跌幅:"+res.data[5]+"%",
+                  "topprice":"最高价:"+res.data[3],"bottomprice":"最低价:"+res.data[4],
+                  "isRed":_this.isRed,"isGreen":_this.isGreen
+                })
+              })
+            }
+            _this.searchRes = stockNode
+            _this.activeTab = "搜索结果"
+            console.log(_this.searchRes)
+          }
+        })
+        .catch(function(error)
+        {
+          console.log(error)
+        })
+    },
+
     changeColor(sign4price){
       let _this = this
       if(sign4price=="+"){
@@ -673,6 +740,10 @@
 
     noConceptionMsg() {
       this.$message('未找到关联的概念信息');
+    },
+
+    openNewUrl(url){
+      window.open(url)
     },
   }
 }
@@ -709,9 +780,14 @@ a {
     /*margin-top: 40px;*/
     margin-left:auto;
     margin-right:auto;
-    background: #154360 repeating-linear-gradient(30deg,
-    hsla(0,0%,100%,.1),hsla(0,0%,100%,.1) 15px,
-    transparent 0, transparent 30px);
+    /*background: #154360 repeating-linear-gradient(30deg,*/
+    /*hsla(0,0%,100%,.1),hsla(0,0%,100%,.1) 15px,*/
+    /*transparent 0, transparent 30px);*/
+    font-family: "Exo", sans-serif;
+    color: #fff;
+    background: linear-gradient(-45deg, #7d4664, #66658b, #196c8b, #186d59);
+    animation: gradientBG 15s ease infinite;
+    background-size: 400% 400%;
   }
   .BoardRegion
   {
@@ -725,5 +801,19 @@ a {
   }
   .redPrice{
     color:red;
+  }
+  .GradientColor{
+
+  }
+  @keyframes gradientBG {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
   }
 </style>
