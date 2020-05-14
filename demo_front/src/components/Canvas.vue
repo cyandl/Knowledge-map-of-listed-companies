@@ -14,7 +14,7 @@
       </el-container>
       <el-tabs type="border-card" v-model="activeTab" >
         <el-tab-pane label="搜索结果" name="搜索结果">
-            <el-card v-for="item in searchRes" style="font-size: 5px">
+            <el-card v-for="item in searchRes[CurrentSearchPage-1]" style="font-size: 5px">
               <el-radio-group v-model="ChosenRadio" @change="search('stock',ChosenRadio)">
                 <el-radio  :label="item.id">{{item.id}} {{item.code}}
                 </el-radio>
@@ -24,6 +24,17 @@
                 {{item.chinesename}}
               </div>
             </el-card>
+          <div>
+            <el-pagination
+              small
+              @current-change="changeCurrentPage"
+              :hide-on-single-page="SwitchValue"
+              :total="SearchPageNum"
+              :current-page="CurrentSearchPage"
+              layout="prev, pager, next">
+            </el-pagination>
+          </div>
+
         </el-tab-pane>
         <el-tab-pane label="信息详情" name="信息详情">
           <el-card class="box-card" >
@@ -42,7 +53,7 @@
           </el-card>
         </el-tab-pane>
         <el-tab-pane label="股价走势">
-          <KChart> </KChart>
+          <KChart ref="kChart"> </KChart>
         </el-tab-pane>
       </el-tabs>
     </div>
@@ -63,6 +74,9 @@
       height:460,
       isGreen:true,
       isRed:false,
+      SwitchValue:true,
+      SearchPageNum:1,
+      CurrentSearchPage:1,
       price:{},
       colorList:["#57C7E3","#ECB5C9","#FFC454","#4C8EDA","#D9C8AE","#C990C0","#8DCC93","#57C7E3"],
       //关系图谱的中心节点颜色、股票、地域、主板、行业、概念、子概念
@@ -70,6 +84,7 @@
       searchRes:[],
       searchInput:"",
       g:null,
+      mainSvg:null,
       stockAttr: {},
       tabAttr:{},
       blank:[],
@@ -111,7 +126,6 @@
 
   mounted(){
     this.initPage();
-    // _this.initGraph(_this.Graph4Update)//初始化画布
   },
   methods:{
     initPage(){
@@ -126,17 +140,8 @@
             let plateNode = []//存放生成的Node信息
             for(let i = 0;i < res.data.length;i++)
             {
-              console.log(res.data)
+              // console.log(res.data)
               plateNode.push({"id":res.data[i].platename,"group": 3,"type":"plate"})
-              // let resAttr = []//属性列表
-              // resAttr.push({"type":"公司全称","msg":response.data[i].chinesename})
-              // resAttr.push({"type":"英文名称","msg":response.data[i].englishname})
-              // resAttr.push({"type":"交易所","msg":response.data[i].market})
-              // resAttr.push({"type":"公司市值","msg":response.data[i].regcapital+"元"})
-              // resAttr.push({"type":"利润","msg":response.data[i].profit+"元"})
-              // resAttr.push({"type":"雇员数量","msg":response.data[i].employee+"人"})
-              // stockNode.push({"id": response.data[i].shorthand, "group": 1,"type":"stock",
-              //   "code":response.data[i].stockcode.substr(2,8),"nodeAttr":resAttr})
             }
             console.log(plateNode)
             _this.Graph4Update.nodes=plateNode;//将返回节点加入Graph
@@ -154,17 +159,16 @@
       const nodes = data.nodes
 
       _this.simulation = d3.forceSimulation(nodes)
-        .force("link", d3.forceLink(links).id(d => d.id).distance(130))
-        .force("charge", d3.forceManyBody().strength(-30))
-        .force("collide", d3.forceCollide().strength(50))
+        .force("link", d3.forceLink(links).id(d => d.id).distance(140))
+        .force("charge", d3.forceManyBody().strength(-100))
+        .force("collide", d3.forceCollide().strength(100))
         .force("center", d3.forceCenter(_this.width / 2, _this.height / 2));
 
-      const svg = d3.select(".CanvasRegion")
+      _this.mainSvg = d3.select(".CanvasRegion")
         .append("svg")
         .attr("viewBox", [0, 0, _this.width, _this.height]);
-      _this.g = svg.append("g")
-      svg.call(d3.zoom().on("zoom",function(){
-        // svg.attr("transform",d3.event.transform)
+      _this.g = _this.mainSvg.append("g")
+      _this.mainSvg.call(d3.zoom().on("zoom",function(){
         _this.g.attr("transform",d3.event.transform)
       }))
 
@@ -264,7 +268,7 @@
         .attr("dy",45)
       ;
 
-      const positiveMarker = svg.append("marker")//连接线的箭头效果，正反方向
+      const positiveMarker = _this.mainSvg.append("marker")//连接线的箭头效果，正反方向
         .attr("id","positiveMarker")
         .attr("orient","auto")
         .attr("stroke-width",2)
@@ -280,14 +284,14 @@
         .attr("fill", "#999")
         .attr("stroke-opacity", 0.6)
 
-      const negativeMarker = svg.append("marker")
+      const negativeMarker = _this.mainSvg.append("marker")
         .attr("id","negativeMarker")
         .attr("orient","auto")
         .attr("stroke-width",2)
         .attr("markerUnits","strokeWidth")
         .attr("markerUnits", "userSpaceOnUse")
         .attr("viewBox", "0 -5 10 10")
-        .attr("refX",95)
+        .attr("refX",105)
         .attr("refY",0)
         .attr("markerWidth",12)
         .attr("markerHeight",12)
@@ -327,8 +331,6 @@
           .attr("x",d => d.x)
           .attr("y",d => d.y);
 
-        // _this.linkRelation
-        //   .attr("font-size",15)
       });
     },
 
@@ -356,54 +358,9 @@
         .on("end", dragended);
     },
 
-    // search(nodeType,nodeMsg){
-    //   //点击\查询事件，数据写死本地
-    //   let tGraph = this.Graph4Update;
-    //   if (nodeType == "location")
-    //   {
-    //     tGraph = this.gdGraph
-    //   }
-    //   if (nodeType == "stock")
-    //   {
-    //     tGraph = this.stockGraph
-    //   }
-    //   if (nodeType == "plate")
-    //   {
-    //     tGraph = this.zbGraph
-    //   }
-    //   if (nodeType == "conception")
-    //   {
-    //     tGraph = this.tslGraph
-    //   }
-    //   if (nodeType == "conceptionTag")
-    //   {
-    //     if (this.stockGraph.conceptionExtension)
-    //     {
-    //       for(let i=0;i<this.stockGraph.conceptionList.length;i++)
-    //       {
-    //         this.stockGraph.links.pop()
-    //         this.stockGraph.nodes.pop()
-    //       }
-    //       this.stockGraph.conceptionExtension = false
-    //     }
-    //     else
-    //     {
-    //       for(let i=0;i<this.stockGraph.conceptionList.length;i++)
-    //       {
-    //         this.stockGraph.nodes.push({"id":this.stockGraph.conceptionList[i], "group": 2,"type":"conception"})
-    //         this.stockGraph.links.push({"source": "所属概念", "target": this.stockGraph.conceptionList[i],
-    //           "value": 2,"relation":"概念"+(i+1)},)
-    //       }
-    //       this.stockGraph.conceptionExtension = true
-    //     }
-    //     tGraph = this.stockGraph
-    //   }
-    //   this.updateGraph(tGraph);
-    // },
-
     search(nodeType,nodeMsg)//点击/查询事件，向后端请求数据（d.type,d.id）也就是mounted初始化请求里的格式
     {
-      let extensionLimit = 10
+      let extensionLimit = 8
       let _this = this
       if (nodeType == "stock")
         //点击节点为股票，输入股票简称（nodeMsg），返回股票信息node
@@ -428,24 +385,19 @@
               {
                 _this.stockGraph.conceptionList.push(res.concepts[i].conceptname)//向二级概念列表写入概念
               }
-
               let resAttr = []//属性列表
-              resAttr.push({"type":"公司全称","msg":response.data[i].chinesename})
-              resAttr.push({"type":"英文名称","msg":response.data[i].englishname})
-              resAttr.push({"type":"公司法人","msg":response.data[i].chairman})
-              resAttr.push({"type":"雇员数量","msg":response.data[i].employee+"人"})
-              resAttr.push({"type":"交易所","msg":response.data[i].market})
-              resAttr.push({"type":"公司市值","msg":response.data[i].regcapital+"元"})
-              resAttr.push({"type":"总股本","msg":response.data[i].profit+"亿元"})
-              resAttr.push({"type":"公司地址","msg":response.data[i].office})
-              // resAttr.push({"type":"公司官网","msg":response.data[i].website})
-              // resAttr.push({"type":"主营业务","msg":response.data[i].business})
-              // resAttr.push({"type":"公司简介","msg":response.data[i].introduction})
-
+              resAttr.push({"type":"公司全称","msg":res.chinesename})
+              resAttr.push({"type":"英文名称","msg":res.englishname})
+              resAttr.push({"type":"公司法人","msg":res.chairman})
+              resAttr.push({"type":"雇员数量","msg":res.employee+"人"})
+              resAttr.push({"type":"交易所","msg":res.market})
+              resAttr.push({"type":"注册资本","msg":res.regcapital+"元"})
+              resAttr.push({"type":"总股本","msg":res.profit+"亿元"})
+              resAttr.push({"type":"公司地址","msg":res.office})
               _this.stockGraph.conceptionExtension = false//概念展开标记置为false
               stockNode.push({"id": res.shorthand, "group": 1,"type":"stock","code":res.stockcode.substr(2,8),
-                "website":'https://'+response.data[i].website,"business":response.data[i].business,
-                "introduction":response.data[i].introduction,"nodeAttr":resAttr})//信息写入临时节点
+                "website":'http://'+res.website,"business":res.business,
+                "introduction":res.introduction,"nodeAttr":resAttr})//信息写入临时节点
               stockNode.push({"id": res.locations[0].provinces, "group": 2,"type":"location"})
               stockNode.push({"id": res.plates[0].platename, "group": 3,"type":"plate"})
               stockNode.push({"id": "所属概念", "group": 5,"type":"conceptionTag"})
@@ -462,12 +414,32 @@
               stockLink.push({"source": res.shorthand, "target": "所属概念", "value": 3,"relation":"概念"})
               _this.stockGraph.links = stockLink
               _this.updateGraph(_this.stockGraph)
+              _this.axios({
+                method:"post",
+                url:"/kline",
+                params: {//请求提交给后端的参数,用params的key-value形式
+                  stockcode:res.stockcode.substr(2,8),//股票代码
+                }
+              })
+                .then(function(KlineRes)
+                {
+                  let dataset = KlineRes.data
+                  if(KlineRes.status === 200)
+                  {
+                    _this.$refs.kChart.updateChart(dataset)
+                  }
+                })
+                .catch(function(error)
+                {
+                  console.log(error)
+                })
             }
           })
           .catch(function(error)
           {
             console.log(error)
           })
+
       }
       else if (nodeType == "conceptionTag")
         //展开概念信息
@@ -525,14 +497,14 @@
                 resAttr.push({"type":"公司法人","msg":response.data[i].chairman})
                 resAttr.push({"type":"雇员数量","msg":response.data[i].employee+"人"})
                 resAttr.push({"type":"交易所","msg":response.data[i].market})
-                resAttr.push({"type":"公司市值","msg":response.data[i].regcapital+"元"})
+                resAttr.push({"type":"注册资本","msg":response.data[i].regcapital+"元"})
                 resAttr.push({"type":"总股本","msg":response.data[i].profit+"亿元"})
                 resAttr.push({"type":"公司地址","msg":response.data[i].office})
                 // resAttr.push({"type":"公司官网","msg":response.data[i].website})
                 // resAttr.push({"type":"主营业务","msg":response.data[i].business})
                 // resAttr.push({"type":"公司简介","msg":response.data[i].introduction})
                 relationNode.push({"id": response.data[i].shorthand, "group": 1,"type":"stock",
-                  "website":'https://'+response.data[i].website,"business":response.data[i].business,
+                  "website":'http://'+response.data[i].website,"business":response.data[i].business,
                   "introduction":response.data[i].introduction,
                   "code":response.data[i].stockcode.substr(2,8),"nodeAttr":resAttr})
               }
@@ -556,14 +528,11 @@
 
     updateGraph(data){
       const _this = this
-      // const nodes = data.nodes.map(d => Object.create(d));
-      // const links = data.links.map(d => Object.create(d));
-      // console.log(data)
       let links = data.links
       let nodes = data.nodes
 
-      d3.select("svg").select("g").remove()
-      _this.g = d3.select("svg").append("g")
+      _this.mainSvg.select("g").remove()
+      _this.g = _this.mainSvg.append("g")
 
       _this.links = _this.g.append("g")//节点的关系连线
         .attr("marker-end","url(#positiveMarker)")
@@ -671,10 +640,10 @@
       _this.simulation.nodes(nodes)
       _this.simulation.force("link").links(links)
       _this.simulation
-        .force("link", d3.forceLink(links).id(d => d.id).distance(130))
-        .force("charge", d3.forceManyBody().strength(-500))
-        .force("collide", d3.forceCollide().strength(200))
-        .force("center", d3.forceCenter(_this.width / 2, _this.height / 2));
+        // .force("link", d3.forceLink(links).id(d => d.id).distance(130))
+        .force("charge", d3.forceManyBody().strength(-400))
+        .force("collide", d3.forceCollide().strength(100))
+      //   .force("center", d3.forceCenter(_this.width / 2, _this.height / 2));
       _this.simulation.alpha(1).restart()
 
     },
@@ -686,36 +655,50 @@
         url:"/queryByName",//这个是请求后端的哪个url的名称，跟后端的要一样
         params: {//请求提交给后端的参数,用params的key-value形式
           chinesename: _this.searchInput,//提交的数据内容
-          //region:this.form.region
         }
       })
         .then(function(response)
         {
           if(response.status === 200)
           {
-            let stockNode = []//存放生成的Node信息
+            _this.SwitchValue = false
+            _this.SearchPageNum = parseInt(response.data.length/5)
+            // if(response.data.length%5!=0)
+            // {
+            //   _this.SearchPageNum += 1;
+            // }
             let resLimit = Math.min(response.data.length,5)
-            for(let i = 0;i <resLimit ;i++)
+            for(let j = 0;j < _this.SearchPageNum;j++)
             {
-              let code = response.data[i].stockcode.substr(2,8)
-              _this.axios({
-                method:"post",
-                url:"/price",
-                params: {//请求提交给后端的参数,用params的key-value形式
-                  "stockcode":code,
-                }
-              }).then(function(res)
+              let stockNode = []//存放生成的Node信息
+              for(let i = 0;i <resLimit ;i++)
               {
-                _this.changeColor(res.data[5].substr(0,1))//传入涨跌幅的符号
-                stockNode.push({"id": response.data[i].shorthand, "group": 1,"type":"stock",
-                  "code":code,"chinesename":response.data[i].chinesename,"price":"股价:"+res.data[2],
-                  "openprice":"开盘价:"+res.data[0],"closeprice":"收盘价:"+res.data[1],"pricelimit":"涨跌幅:"+res.data[5]+"%",
-                  "topprice":"最高价:"+res.data[3],"bottomprice":"最低价:"+res.data[4],
-                  "isRed":_this.isRed,"isGreen":_this.isGreen
+                let n = i+j*_this.SearchPageNum
+                if(n>=response.data.length)
+                {
+                  break
+                }
+                let code = response.data[n].stockcode.substr(2,8)
+                _this.axios({
+                  method:"post",
+                  url:"/price",
+                  params: {//请求提交给后端的参数,用params的key-value形式
+                    "stockcode":code,
+                  }
+                }).then(function(res)
+                {
+                  _this.changeColor(res.data[5].substr(0,1))//传入涨跌幅的符号
+                  stockNode.push({"id": response.data[n].shorthand, "group": 1,"type":"stock",
+                    "code":code,"chinesename":response.data[n].chinesename,"price":"股价:"+res.data[2],
+                    "openprice":"开盘价:"+res.data[0],"closeprice":"收盘价:"+res.data[1],"pricelimit":"涨跌幅:"+res.data[5]+"%",
+                    "topprice":"最高价:"+res.data[3],"bottomprice":"最低价:"+res.data[4],
+                    "isRed":_this.isRed,"isGreen":_this.isGreen
+                  })
                 })
-              })
+              }
+              _this.searchRes.push(stockNode)
             }
-            _this.searchRes = stockNode
+
             _this.activeTab = "搜索结果"
             console.log(_this.searchRes)
           }
@@ -742,8 +725,11 @@
       this.$message('未找到关联的概念信息');
     },
 
-    openNewUrl(url){
-      window.open(url)
+    changeCurrentPage(val){
+      let _this = this
+      _this.CurrentSearchPage = val
+      console.log(_this.CurrentSearchPage)
+      console.log(_this.searchRes)
     },
   }
 }
@@ -777,7 +763,6 @@ a {
     flex-shrink:0;
     border: 1px solid #2c3e50;
     border-radius: 8px;
-    /*margin-top: 40px;*/
     margin-left:auto;
     margin-right:auto;
     /*background: #154360 repeating-linear-gradient(30deg,*/

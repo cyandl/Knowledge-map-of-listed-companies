@@ -1,5 +1,12 @@
 <template>
-  <div class="KChart" >
+  <div style="text-align:left;">
+    <div class="KChart" >
+    </div>
+    <div>{{LocalDate}}</div>
+    <div style="color: red">{{LocalChange}}</div>
+    <div v-for="item in chartAttr" >
+      {{item.type}}{{item.msg}}
+    </div>
   </div>
 </template>
 
@@ -10,6 +17,7 @@
       data()
       {
         return{
+          chartSvg:null,
           g:null,
           rects:null,
           lines:null,
@@ -40,69 +48,84 @@
           ['2012-01-19', 29.730, 29.370, 30.600, 30.210, 38141, 115276000.00],
           ['2012-01-20', 30.100, 30.100, 32.220, 31.890, 66314, 207219200.00]
           ],
+          chartAttr:[],
+          LocalDate:null,
+          LocalChange:null,
+          ChangeColor:"red",
         }
       },
       mounted() {
-          this.initChart(this.dataset);
+          this.initChart();
       },
       methods:
       {
-        getPrices(data) {
-          return data.slice(1, 5); // 取 1~4 （开盘价、最低价、最高价、收盘价） 数据
-        },
-
         getMinPrice(d) {
-          return d3.min(this.getPrices(d));
+          return d.low;
         },
 
         getMaxPrice(d) {
-          return d3.max(this.getPrices(d));
+          return d.high;
         },
 
         getColor(d) {
           // 1-开盘价、4-收盘价
           let PRICE_OPEN=1;
           let PRICE_CLOSE=4;
-          return (d[PRICE_OPEN] < d[PRICE_CLOSE]) ? 'red' : 'green';
+          return (d.open < d.close ? 'red' : 'green');
+        },
+        initChart(){
+          let _this = this
+          let w=200;
+          let h=150;
+          _this.chartSvg = d3.select(".KChart")
+            .append("svg")
+            .attr("viewBox", [0, 0, w+30, h+14]);
+          _this.g = _this.chartSvg.append("g")
+          _this.chartSvg.call(d3.zoom().on("zoom",function(){
+            _this.g.attr("transform",d3.event.transform)
+          }))
+          _this.lines = _this.g.append("g")
+          _this.rects = _this.g.append("g")
+          _this.tagText = _this.g.append("g")//节点的文字显示
         },
 
-        initChart(dataset) {
+        updateChart(dataset) {
+          // console.log(dataset[0])
           let _this = this
+          _this.chartSvg.select("g").remove()
+          _this.g = _this.chartSvg.append("g")
           let w=200;
           let h=150;
           let barPadding=2;
           let dataCnt = dataset.length;
           let priceMin = d3.min(dataset, _this.getMinPrice);
           let priceMax = d3.max(dataset, _this.getMaxPrice);
-          let EXCHANGE_DATE=0;//交易日 必须
-          let PRICE_OPEN=1;//开盘价 必须
-          let PRICE_MIN=2;//最低价 必须
-          let PRICE_MAX=3;//最高价 必须
-          let PRICE_CLOSE=4;//收盘价 必须
-          let EXCHANGE_NUM=5;//交易量 可选
-          let EXCHANGE_MONEY=6;//交易金额 可选
+          let Xoffset = 210;
+          // let priceMid = priceMax+priceMin;
+          let priceMid = ((parseFloat(priceMax)+parseFloat(priceMin))/2).toFixed(2);
+          if (priceMid > 99){
+            Xoffset = 205
+          }
+          // this.date = date;
+          // this.open = open;
+          // this.close = close;
+          // this.high = high;
+          // this.low = low;
+          // this.volume = volume;
+          // this.p_change = p_change;
           let NoMin = 0;
           let NoMax = 0;
-          let tags = [{"id":dataset[0][0],"dx":0,"dy":163},
-            {"id":dataset[dataCnt-1][0],"dx":175,"dy":163},
-            {"id":dataset[dataCnt/2][0],"dx":95,"dy":163},
-            {"id":priceMax,"dx":210,"dy":8},
-            {"id":((priceMax+priceMin)/2).toFixed(2),"dx":210,"dy":74},
-            {"id":priceMin,"dx":210,"dy":155},
-            // {"id":dataset[dataCnt/2][0],"dx":95,"dy":163},
+          let tags = [
+            {"id":dataset[0].date,"dx":0,"dy":163},
+            {"id":dataset[dataCnt-1].date,"dx":175,"dy":163},
+            {"id":dataset[(dataCnt-1)/2].date,"dx":95,"dy":163},
+            {"id":priceMax,"dx":Xoffset,"dy":8},
+            {"id":priceMid,"dx":Xoffset,"dy":74},
+            {"id":priceMin,"dx":Xoffset,"dy":155},
             ]
-
           let yscale = d3.scaleLinear()
             .domain([priceMin, priceMax])
             .range([0, h]);
-          const svg = d3.select(".KChart")
-            .append("svg")
-            .attr("viewBox", [0, 0, w+30, h+14]);
-          _this.g = svg.append("g")
-          svg.call(d3.zoom().on("zoom",function(){
-            _this.g.attr("transform",d3.event.transform)
-          }))
-          console.log(svg)
           _this.lines = _this.g.append("g")
             .selectAll("lines")
             .data(dataset)
@@ -129,24 +152,43 @@
               return i * (w / dataCnt)+10
             })
             .attr('y', function(d, i) {
-              return h - yscale(d3.max([d[PRICE_OPEN], d[PRICE_CLOSE]]))+5;
+              return h - yscale(d3.max([d.open, d.close]))+5;
             })
             .attr('width', function(d, i) {
               return w / dataCnt - barPadding;
             })
             .attr('height', function(d, i) {
-              let vv = Math.abs(yscale(d[PRICE_OPEN]) - yscale(d[PRICE_CLOSE]));
+              let vv = Math.abs(yscale(d.open) - yscale(d.close));
               if (vv < 0.5) {
                 vv = 0.5; // 防止数据为0或高度过小
               }
               return vv;
             })
             .attr("fill", _this.getColor)
+            .on("mouseover", function(d) {
+              d3.select(this).style("stroke", "#00849e");
+              _this.LocalDate="交易日："+d.date;
+              _this.LocalChange="涨跌幅："+d.p_change+"%";
+              _this.chartAttr=[
+                {"type":"开盘价：","msg":d.open},
+                {"type":"收盘价：","msg":d.close},
+                {"type":"最高价：","msg":d.high},
+                {"type":"最低价：","msg":d.low},
+                {"type":"交易量：","msg":d.volume},
+              ];
+            })
+            .on("mouseout", function(d) {
+              _this.LocalDate=null;
+              _this.LocalChange=null;
+              d3.select(this).style("stroke", null);
+              _this.chartAttr=[
+              ];
+            })
 
           ;
           _this.rects.append("title")
             .text(function(d, i) {
-            return "交易日期：" + d[EXCHANGE_DATE] + " 交易量：" + d[EXCHANGE_NUM] + " 交易金额：" + d[EXCHANGE_MONEY];
+            return "交易日：" + d.date + " 交易量：" + d.volume + " 涨跌幅：" + d.p_change+"%";
           });
 
           _this.tagText = _this.g.append("g")//节点的文字显示
@@ -166,7 +208,6 @@
               return d.dy;
             })
           ;
-
         }
 
 
