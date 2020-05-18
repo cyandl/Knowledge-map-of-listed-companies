@@ -1,9 +1,10 @@
 <template>
   <div style="text-align:left;">
+    <div style="text-align:center;">{{LocalStock}}</div>
     <div class="KChart" >
     </div>
     <div>{{LocalDate}}</div>
-    <div style="color: red">{{LocalChange}}</div>
+    <div v-bind:class="{greenPrice:isGreen, redPrice:isRed}">{{LocalChange}}</div>
     <div v-for="item in chartAttr" >
       {{item.type}}{{item.msg}}
     </div>
@@ -22,6 +23,9 @@
           rects:null,
           lines:null,
           tagText:null,
+          isGreen:true,
+          isRed:true,
+          LocalStock:null,
           dataset:[
           ['2011-12-16', 25.000, 24.900, 26.800, 26.440, 1171773, 3013978000.00],
           ['2011-12-19', 26.210, 26.000, 27.490, 26.960, 524161, 1393216000.00],
@@ -60,11 +64,11 @@
       methods:
       {
         getMinPrice(d) {
-          return d.low;
+          return parseFloat(d.low);
         },
 
         getMaxPrice(d) {
-          return d.high;
+          return parseFloat(d.high);
         },
 
         getColor(d) {
@@ -89,23 +93,14 @@
           _this.tagText = _this.g.append("g")//节点的文字显示
         },
 
-        updateChart(dataset) {
-          // console.log(dataset[0])
+        updateChart(dataset,LocalStock) {
           let _this = this
+          _this.LocalStock = LocalStock
           _this.chartSvg.select("g").remove()
           _this.g = _this.chartSvg.append("g")
           let w=200;
           let h=150;
           let barPadding=2;
-          let dataCnt = dataset.length;
-          let priceMin = d3.min(dataset, _this.getMinPrice);
-          let priceMax = d3.max(dataset, _this.getMaxPrice);
-          let Xoffset = 210;
-          // let priceMid = priceMax+priceMin;
-          let priceMid = ((parseFloat(priceMax)+parseFloat(priceMin))/2).toFixed(2);
-          if (priceMid > 99){
-            Xoffset = 205
-          }
           // this.date = date;
           // this.open = open;
           // this.close = close;
@@ -113,8 +108,14 @@
           // this.low = low;
           // this.volume = volume;
           // this.p_change = p_change;
-          let NoMin = 0;
-          let NoMax = 0;
+          let dataCnt = dataset.length;
+          let priceMin = d3.min(dataset, _this.getMinPrice);
+          let priceMax = d3.max(dataset,_this.getMaxPrice);
+          let Xoffset = 210;
+          let priceMid = ((parseFloat(priceMax)+parseFloat(priceMin))/2).toFixed(2);
+          if (priceMid > 99.99){
+            Xoffset = 205
+          }
           let tags = [
             {"id":dataset[0].date,"dx":0,"dy":163},
             {"id":dataset[dataCnt-1].date,"dx":175,"dy":163},
@@ -168,6 +169,16 @@
             .on("mouseover", function(d) {
               d3.select(this).style("stroke", "#00849e");
               _this.LocalDate="交易日："+d.date;
+              if (parseFloat(d.p_change) >0)
+              {
+                _this.isGreen = false;
+                _this.isRed = true;
+              }
+              else
+              {
+                _this.isGreen = true;
+                _this.isRed = false;
+              }
               _this.LocalChange="涨跌幅："+d.p_change+"%";
               _this.chartAttr=[
                 {"type":"开盘价：","msg":d.open},
@@ -223,5 +234,11 @@
     /*border: 1px solid #2c3e50;*/
     margin-left:auto;
     margin-right:auto;
+  }
+  .greenPrice{
+    color:forestgreen;
+  }
+  .redPrice{
+    color:red;
   }
 </style>
